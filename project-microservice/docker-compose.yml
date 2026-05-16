@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  project-microservice:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: project-microservice
+    ports:
+      - "8081:8081"
+    environment:
+      - SPRING_PROFILES_ACTIVE=dev
+      - JAVA_OPTS=-Xmx512m -Xms256m
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8081/api/projects" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    networks:
+      - project-network
+    restart: unless-stopped
+
+networks:
+  project-network:
+    driver: bridge

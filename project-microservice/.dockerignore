@@ -1,0 +1,47 @@
+# Maven
+target/
+.m2/
+*.jar
+*.war
+*.ear
+
+# IDE
+.idea/
+.vscode/
+*.iml
+*.iws
+*.ipr
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+.gitignore
+.git/
+.github/
+.gitattributes
+
+# Build
+.classpath
+.project
+.settings/
+bin/
+build/
+
+# Logs
+*.log
+logs/
+
+# Testing
+.maven/
+test-output/
+
+# Documentation
+README.md
+docs/
+
+# CI/CD
+.travis.yml
+.github/
+Jenkinsfile
