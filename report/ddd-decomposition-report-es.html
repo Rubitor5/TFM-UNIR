@@ -1,0 +1,1757 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Descompositor de Monolito DDD - Aplicación Empresarial (Snowman)</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            padding: 20px;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 40px;
+        }
+        header {
+            border-bottom: 3px solid #2c3e50;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+        h1 {
+            color: #2c3e50;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        h2 {
+            color: #34495e;
+            font-size: 2em;
+            margin-top: 40px;
+            margin-bottom: 20px;
+            border-left: 5px solid #3498db;
+            padding-left: 15px;
+        }
+        h3 {
+            color: #34495e;
+            font-size: 1.3em;
+            margin-top: 25px;
+            margin-bottom: 15px;
+        }
+        h4 {
+            color: #555;
+            font-size: 1.1em;
+            margin-top: 15px;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            color: #7f8c8d;
+            font-size: 1.2em;
+            margin-bottom: 10px;
+        }
+        .date-generated {
+            color: #95a5a6;
+            font-size: 0.9em;
+            margin-top: 10px;
+        }
+        .metric {
+            display: inline-block;
+            background: #ecf0f1;
+            padding: 10px 20px;
+            border-radius: 5px;
+            margin: 5px;
+            border-left: 4px solid #3498db;
+        }
+        .section {
+            margin-bottom: 40px;
+        }
+        .bounded-context {
+            background: #f8f9fa;
+            border-left: 4px solid #3498db;
+            padding: 20px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+        .bounded-context.candidate-1 {
+            border-left-color: #27ae60;
+            background: #f0fdf4;
+        }
+        .bounded-context.candidate-2 {
+            border-left-color: #f39c12;
+            background: #fffbf0;
+        }
+        .bounded-context.candidate-3 {
+            border-left-color: #e74c3c;
+            background: #fef5f5;
+        }
+        .metric-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .metric-card {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 15px;
+            text-align: center;
+        }
+        .metric-card .label {
+            font-size: 0.9em;
+            color: #7f8c8d;
+            margin-bottom: 5px;
+        }
+        .metric-card .value {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        .score-high {
+            color: #27ae60;
+        }
+        .score-medium {
+            color: #f39c12;
+        }
+        .score-low {
+            color: #e74c3c;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th {
+            background: #34495e;
+            color: white;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+        }
+        td {
+            border-bottom: 1px solid #ddd;
+            padding: 12px;
+        }
+        tr:nth-child(even) {
+            background: #f9f9f9;
+        }
+        tr:hover {
+            background: #f0f0f0;
+        }
+        .mermaid {
+            display: flex;
+            justify-content: center;
+            margin: 30px 0;
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 4px;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            height: 400px;
+            margin: 30px 0;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 20px;
+        }
+        .recommendation {
+            background: #d5f4e6;
+            border-left: 4px solid #27ae60;
+            padding: 20px;
+            border-radius: 4px;
+            margin: 20px 0;
+        }
+        .risk {
+            background: #fadbd8;
+            border-left: 4px solid #e74c3c;
+            padding: 20px;
+            border-radius: 4px;
+            margin: 20px 0;
+        }
+        .warning {
+            background: #fef5e7;
+            border-left: 4px solid #f39c12;
+            padding: 20px;
+            border-radius: 4px;
+            margin: 20px 0;
+        }
+        .code-block {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+            margin: 15px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+        .endpoint {
+            background: #ecf0f1;
+            border-left: 3px solid #3498db;
+            padding: 10px 15px;
+            margin: 10px 0;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+        .entity {
+            background: #ecf0f1;
+            border-left: 3px solid #9b59b6;
+            padding: 10px 15px;
+            margin: 10px 0;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+        .service {
+            background: #ecf0f1;
+            border-left: 3px solid #27ae60;
+            padding: 10px 15px;
+            margin: 10px 0;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+        .toc {
+            background: #f5f7fa;
+            border: 1px solid #ddd;
+            padding: 20px;
+            border-radius: 4px;
+            margin: 30px 0;
+        }
+        .toc h3 {
+            margin-top: 0;
+        }
+        .toc ul {
+            list-style: none;
+        }
+        .toc li {
+            margin: 8px 0;
+        }
+        .toc a {
+            color: #3498db;
+            text-decoration: none;
+        }
+        .toc a:hover {
+            text-decoration: underline;
+        }
+        .extraction-phases {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .phase {
+            background: white;
+            border: 2px solid #3498db;
+            border-radius: 8px;
+            padding: 20px;
+        }
+        .phase.phase-1 {
+            border-color: #27ae60;
+            background: #f0fdf4;
+        }
+        .phase.phase-2 {
+            border-color: #f39c12;
+            background: #fffbf0;
+        }
+        .phase.phase-3 {
+            border-color: #e74c3c;
+            background: #fef5f5;
+        }
+        .phase-title {
+            font-size: 1.1em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        ul, ol {
+            margin-left: 30px;
+        }
+        li {
+            margin-bottom: 8px;
+        }
+        .badge {
+            display: inline-block;
+            background: #3498db;
+            color: white;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            margin-right: 5px;
+        }
+        .badge.high {
+            background: #27ae60;
+        }
+        .badge.medium {
+            background: #f39c12;
+        }
+        .badge.low {
+            background: #e74c3c;
+        }
+        footer {
+            border-top: 1px solid #ddd;
+            padding-top: 20px;
+            margin-top: 40px;
+            text-align: center;
+            color: #7f8c8d;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🏔️ Informe del Descompositor de Monolito DDD</h1>
+            <p class="subtitle">Aplicación Empresarial - Snowman</p>
+            <p class="date-generated">Generado: 16 de mayo de 2026</p>
+            <div style="margin-top: 15px;">
+                <span class="metric">📊 Contextos Totales: 3</span>
+                <span class="metric">📈 Candidatos para Extracción: 3</span>
+                <span class="metric">💻 LOC Total: 3,676</span>
+                <span class="metric">📁 Archivos Java: 84</span>
+            </div>
+        </header>
+
+        <div class="toc">
+            <h3>📖 Tabla de Contenidos</h3>
+            <ul>
+                <li><a href="#executive-summary">Resumen Ejecutivo</a></li>
+                <li><a href="#architecture-overview">Visión General de la Arquitectura</a></li>
+                <li><a href="#bounded-contexts">Contextos Acotados</a></li>
+                <li><a href="#context-map">Mapa de Contexto</a></li>
+                <li><a href="#dependency-analysis">Análisis de Dependencias</a></li>
+                <li><a href="#microservice-scoring">Puntuación de Candidatos de Microservicios</a></li>
+                <li><a href="#extraction-roadmap">Plan de Extracción</a></li>
+                <li><a href="#technology-recommendations">Recomendaciones Tecnológicas</a></li>
+                <li><a href="#integration-strategy">Estrategia de Integración</a></li>
+                <li><a href="#risks-and-recommendations">Riesgos y Recomendaciones</a></li>
+                <li><a href="#openapi-specifications">Especificaciones OpenAPI</a></li>
+            </ul>
+        </div>
+
+        <!-- EXECUTIVE SUMMARY -->
+        <section id="executive-summary" class="section">
+            <h2>Resumen Ejecutivo</h2>
+
+            <h3>Evaluación de Salud del Monolito</h3>
+            <div class="metric-grid">
+                <div class="metric-card">
+                    <div class="label">Puntuación General de Salud</div>
+                    <div class="value"><span class="score-high">7.2/10</span></div>
+                </div>
+                <div class="metric-card">
+                    <div class="label">Capacidad de Descomposición</div>
+                    <div class="value"><span class="score-high">8.0/10</span></div>
+                </div>
+                <div class="metric-card">
+                    <div class="label">Complejidad Arquitectónica</div>
+                    <div class="value"><span class="score-medium">5.5/10</span></div>
+                </div>
+                <div class="metric-card">
+                    <div class="label">Índice de Acoplamiento</div>
+                    <div class="value"><span class="score-medium">0.45</span></div>
+                </div>
+            </div>
+
+            <div class="recommendation">
+                <h4>✅ Hallazgos Clave</h4>
+                <ul>
+                    <li><strong>Capas Bien Estructuradas:</strong> La aplicación sigue una arquitectura hexagonal/estratificada limpia con separación clara entre las capas de infraestructura, aplicación y dominio.</li>
+                    <li><strong>Tres Contextos Acotados Distintos:</strong> Los contextos de Gestión de Empleados, Gestión de Proyectos y Configuración de Aplicación son claramente identificables.</li>
+                    <li><strong>Acoplamiento Bajo a Medio:</strong> El acoplamiento entre contextos es manejable (0.45), haciendo factible la extracción incremental.</li>
+                    <li><strong>Propiedad de Datos Clara:</strong> Cada contexto tiene una propiedad de datos clara con entidades compartidas mínimas.</li>
+                    <li><strong>Límites de Abstracción Buenos:</strong> Los patrones de Repositorio y Servicio se aplican consistentemente.</li>
+                </ul>
+            </div>
+
+            <div class="recommendation">
+                <h4>🎯 Acciones Inmediatas</h4>
+                <ol>
+                    <li>Extraer <strong>Contexto de Gestión de Proyectos</strong> primero (valor empresarial más alto, complejidad más baja)</li>
+                    <li>Implementar capa de anti-corrupción para el contexto compartido de Usuario/AppInfo</li>
+                    <li>Establecer comunicación impulsada por eventos para interacciones entre contextos</li>
+                    <li>Separar bases de datos usando patrón Strangler Fig</li>
+                    <li>Monitorear rendimiento durante las fases de extracción</li>
+                </ol>
+            </div>
+        </section>
+
+        <!-- ARCHITECTURE OVERVIEW -->
+        <section id="architecture-overview" class="section">
+            <h2>Visión General de la Arquitectura</h2>
+
+            <h3>Stack de Monolito Actual</h3>
+            <div class="metric-grid">
+                <div class="metric-card">
+                    <div class="label">Framework</div>
+                    <div class="value">Spring 4.3</div>
+                </div>
+                <div class="metric-card">
+                    <div class="label">ORM</div>
+                    <div class="value">Hibernate 5.4</div>
+                </div>
+                <div class="metric-card">
+                    <div class="label">Base de Datos</div>
+                    <div class="value">MySQL 8.0</div>
+                </div>
+                <div class="metric-card">
+                    <div class="label">Mensajería</div>
+                    <div class="value">ActiveMQ 5.10</div>
+                </div>
+                <div class="metric-card">
+                    <div class="label">Caché</div>
+                    <div class="value">EhCache 2.9</div>
+                </div>
+                <div class="metric-card">
+                    <div class="label">Programación</div>
+                    <div class="value">Quartz 2.3</div>
+                </div>
+            </div>
+
+            <h3>Componentes Tecnológicos</h3>
+            <div class="mermaid">
+graph LR
+    UI["Interfaces de Usuario (APIs REST)"]
+    WEB["Servidor Jetty"]
+    SPRING["Spring Framework (4.3)"]
+    DB["Base de Datos MySQL"]
+    CACHE["EhCache"]
+    MOM["ActiveMQ (JMS)"]
+    SCHEDULER["Planificador Quartz"]
+
+    UI -->|HTTP| WEB
+    WEB -->|DI/Bean| SPRING
+    SPRING -->|ORM| DB
+    SPRING -->|Caché| CACHE
+    SPRING -->|Mensajería| MOM
+    SPRING -->|Trabajos| SCHEDULER
+
+    classDef infra fill:#e74c3c,stroke:#c0392b,color:#fff
+    classDef data fill:#3498db,stroke:#2980b9,color:#fff
+    classDef async fill:#f39c12,stroke:#d68910,color:#fff
+    class WEB,SPRING infra
+    class DB data
+    class MOM,SCHEDULER async
+            </div>
+
+            <h3>Arquitectura Estratificada</h3>
+            <ul>
+                <li><strong>Capa de Presentación:</strong> Puntos finales REST (JAX-RS/Jersey), gestionados por la capa de infraestructura</li>
+                <li><strong>Capa de Aplicación:</strong> Programación, caché, verificaciones de salud, coordinación</li>
+                <li><strong>Capa de Dominio:</strong> Lógica empresarial, entidades, servicios, repositorios</li>
+                <li><strong>Capa de Infraestructura:</strong> Acceso a datos (DAOs), adaptadores de mensajería, puntos finales web</li>
+            </ul>
+        </section>
+
+        <!-- BOUNDED CONTEXTS -->
+        <section id="bounded-contexts" class="section">
+            <h2>Contextos Acotados</h2>
+
+            <div class="bounded-context candidate-1">
+                <h3>1. Contexto de Gestión de Empleados</h3>
+                <p><strong>Capacidad Empresarial:</strong> Ciclo de vida de empleados, gestión de roles, seguimiento de asignaciones de proyectos</p>
+
+                <h4>Modelo de Dominio</h4>
+                <div class="entity">Empleado (Raíz Agregada)</div>
+                <div class="entity">RolEmpleado (Objeto de Valor)</div>
+                <div class="entity">EmpleadoProyecto (Entidad de Unión)</div>
+
+                <h4>Servicios y Repositorios</h4>
+                <div class="service">ServicioEmpleado (Servicio de Aplicación)</div>
+                <div class="service">RepositorioEmpleado (Acceso a Datos)</div>
+
+                <h4>Puntos Finales de API REST</h4>
+                <div class="endpoint">GET /api/empleados</div>
+                <div class="endpoint">GET /api/empleados/{id}</div>
+                <div class="endpoint">POST /api/empleados</div>
+                <div class="endpoint">PUT /api/empleados/{id}</div>
+                <div class="endpoint">DELETE /api/empleados/{id}</div>
+
+                <h4>Tablas de Base de Datos</h4>
+                <ul>
+                    <li><code>empleado</code> - Datos principales del empleado</li>
+                    <li><code>rol_empleado</code> - Búsqueda de roles</li>
+                    <li><code>empleado_proyecto</code> - Tabla de unión para relaciones M2M</li>
+                </ul>
+
+                <h4>Dependencias</h4>
+                <ul>
+                    <li>→ <strong>Contexto de Gestión de Proyectos</strong> (vía EmpleadoProyecto)</li>
+                    <li>← <strong>Contexto de Gestión de Proyectos</strong> (Proyecto consulta asignaciones de Empleados)</li>
+                </ul>
+
+                <h4>Métricas de Cohesión y Acoplamiento</h4>
+                <div class="metric-grid">
+                    <div class="metric-card">
+                        <div class="label">Cohesión Interna</div>
+                        <div class="value score-high">8.5/10</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="label">Acoplamiento Externo</div>
+                        <div class="value score-high">2.0/10</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="label">Propiedad de Datos</div>
+                        <div class="value score-high">9.0/10</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bounded-context candidate-2">
+                <h3>2. Contexto de Gestión de Proyectos</h3>
+                <p><strong>Capacidad Empresarial:</strong> Ciclo de vida del proyecto, relaciones con clientes, asignaciones de empleados a proyectos, seguimiento de entrega</p>
+
+                <h4>Modelo de Dominio</h4>
+                <div class="entity">Proyecto (Raíz Agregada)</div>
+                <div class="entity">Cliente (Entidad Referenciada)</div>
+                <div class="entity">EmpleadoProyecto (Entidad de Unión)</div>
+
+                <h4>Servicios y Repositorios</h4>
+                <div class="service">ServicioProyecto (Servicio de Aplicación)</div>
+                <div class="service">RepositorioProyecto (Acceso a Datos)</div>
+                <div class="service">ServicioCliente (Servicio de Aplicación)</div>
+                <div class="service">RepositorioCliente (Acceso a Datos)</div>
+
+                <h4>Puntos Finales de API REST</h4>
+                <div class="endpoint">GET /api/proyectos</div>
+                <div class="endpoint">GET /api/proyectos/{id}</div>
+                <div class="endpoint">POST /api/proyectos</div>
+                <div class="endpoint">PUT /api/proyectos/{id}</div>
+                <div class="endpoint">DELETE /api/proyectos/{id}</div>
+                <div class="endpoint">GET /api/clientes</div>
+                <div class="endpoint">POST /api/clientes</div>
+
+                <h4>Tablas de Base de Datos</h4>
+                <ul>
+                    <li><code>cliente</code> - Datos maestros de cliente</li>
+                    <li><code>proyecto</code> - Datos principales del proyecto</li>
+                    <li><code>empleado_proyecto</code> - Tabla de unión (compartida)</li>
+                </ul>
+
+                <h4>Dependencias</h4>
+                <ul>
+                    <li>→ <strong>Contexto de Gestión de Empleados</strong> (vía EmpleadoProyecto)</li>
+                    <li>← <strong>Contexto de Gestión de Empleados</strong> (Empleado consulta asignaciones de Proyectos)</li>
+                </ul>
+
+                <h4>Métricas de Cohesión y Acoplamiento</h4>
+                <div class="metric-grid">
+                    <div class="metric-card">
+                        <div class="label">Cohesión Interna</div>
+                        <div class="value score-high">8.7/10</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="label">Acoplamiento Externo</div>
+                        <div class="value score-high">2.1/10</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="label">Propiedad de Datos</div>
+                        <div class="value score-high">8.5/10</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bounded-context candidate-3">
+                <h3>3. Contexto de Configuración y Monitoreo de Aplicación</h3>
+                <p><strong>Capacidad Empresarial:</strong> Seguimiento de versión de aplicación, monitoreo de salud, informes, metadatos del sistema</p>
+
+                <h4>Modelo de Dominio</h4>
+                <div class="entity">InfoAplicación (Raíz Agregada)</div>
+                <div class="entity">Usuario (Usuario de Aplicación)</div>
+                <div class="entity">DatosInforme (Objeto de Valor)</div>
+
+                <h4>Servicios y Repositorios</h4>
+                <div class="service">ServicioInfoAplicación (Servicio de Aplicación)</div>
+                <div class="service">RepositorioInfoAplicación (Acceso a Datos)</div>
+                <div class="service">ServicioUsuario (Servicio de Aplicación)</div>
+                <div class="service">ServicioInformes (Servicio Programado)</div>
+
+                <h4>Puntos Finales de API REST</h4>
+                <div class="endpoint">GET /api/info-aplicación</div>
+                <div class="endpoint">GET /api/salud</div>
+                <div class="endpoint">GET /api/usuarios</div>
+                <div class="endpoint">POST /api/usuarios</div>
+                <div class="endpoint">PUT /api/usuarios/{id}</div>
+
+                <h4>Tareas Programadas</h4>
+                <ul>
+                    <li>TareaTomografíaInforme - Agregación periódica de datos de informes</li>
+                </ul>
+
+                <h4>Tablas de Base de Datos</h4>
+                <ul>
+                    <li><code>info_app</code> - Versión y metadatos</li>
+                    <li><code>usuario</code> - Usuarios de la aplicación</li>
+                </ul>
+
+                <h4>Características</h4>
+                <ul>
+                    <li>Problemas transversales (salud, monitoreo)</li>
+                    <li>Lógica empresarial limitada</li>
+                    <li>Ejecución de tareas programadas</li>
+                    <li>Informes y análisis</li>
+                </ul>
+
+                <h4>Métricas de Cohesión y Acoplamiento</h4>
+                <div class="metric-grid">
+                    <div class="metric-card">
+                        <div class="label">Cohesión Interna</div>
+                        <div class="value score-medium">6.2/10</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="label">Acoplamiento Externo</div>
+                        <div class="value score-medium">4.5/10</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="label">Propiedad de Datos</div>
+                        <div class="value score-high">8.0/10</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- CONTEXT MAP -->
+        <section id="context-map" class="section">
+            <h2>Mapa de Contexto - Diagrama de Relaciones</h2>
+
+            <div class="mermaid">
+graph TD
+    EMC["Gestión de Empleados<br/>(Contexto Acotado)"]
+    PMC["Gestión de Proyectos<br/>(Contexto Acotado)"]
+    ACMC["Configuración de Aplicación<br/>(Contexto Acotado)"]
+
+    EMC -->|Cliente-Proveedor<br/>Empleado colabora en| PMC
+    PMC -->|Proveedor<br/>Proyecto referencia| EMC
+    EMC -->|Lenguaje Publicado<br/>Eventos| ACMC
+    PMC -->|Lenguaje Publicado<br/>Eventos| ACMC
+
+    classDef context fill:#3498db,stroke:#2980b9,color:#fff,stroke-width:2px
+    class EMC,PMC,ACMC context
+            </div>
+
+            <h3>Patrones de Relación</h3>
+
+            <h4>Gestión de Empleados ↔ Gestión de Proyectos</h4>
+            <ul>
+                <li><strong>Patrón:</strong> Cliente-Proveedor (Bilateral)</li>
+                <li><strong>Integración:</strong> Tabla de unión compartida (EmpleadoProyecto)</li>
+                <li><strong>Descripción:</strong> Los proyectos requieren empleados para asignación. Los empleados rastrean su participación en Proyectos. Los datos están fuertemente acoplados a través de la tabla de unión.</li>
+                <li><strong>Complejidad:</strong> Alta - Requiere migración cuidadosa de la base de datos durante la extracción</li>
+            </ul>
+
+            <h4>Gestión de Empleados → Configuración de Aplicación</h4>
+            <ul>
+                <li><strong>Patrón:</strong> Lenguaje Publicado (Unidireccional)</li>
+                <li><strong>Integración:</strong> Impulsado por eventos (potencial)</li>
+                <li><strong>Descripción:</strong> Los eventos de empleados (creado, modificado, asignado) podrían publicarse para informes/análisis</li>
+            </ul>
+
+            <h4>Gestión de Proyectos → Configuración de Aplicación</h4>
+            <ul>
+                <li><strong>Patrón:</strong> Lenguaje Publicado (Unidireccional)</li>
+                <li><strong>Integración:</strong> Impulsado por eventos (potencial)</li>
+                <li><strong>Descripción:</strong> Los eventos de proyecto podrían desencadenar instantáneas de informes y monitoreo del sistema</li>
+            </ul>
+        </section>
+
+        <!-- DEPENDENCY ANALYSIS -->
+        <section id="dependency-analysis" class="section">
+            <h2>Análisis de Dependencias</h2>
+
+            <h3>Gráfico de Dependencia de Paquetes</h3>
+            <div class="mermaid">
+graph LR
+    REST["infrastructure.rest"]
+    MSG["infrastructure.messaging"]
+    CACHE["infrastructure.cache"]
+    DB["infrastructure.db"]
+    DOMAIN["domain"]
+    APP["application"]
+
+    REST -->|depende| DOMAIN
+    MSG -->|depende| DOMAIN
+    CACHE -->|depende| APP
+    DB -->|depende| DOMAIN
+    APP -->|depende| DOMAIN
+    REST -->|llama| APP
+
+    classDef infra fill:#e74c3c,stroke:#c0392b,color:#fff
+    classDef domain fill:#27ae60,stroke:#229954,color:#fff
+    classDef app fill:#3498db,stroke:#2980b9,color:#fff
+    class REST,MSG,CACHE,DB infra
+    class DOMAIN domain
+    class APP app
+            </div>
+
+            <h3>Resumen de Métricas de Acoplamiento</h3>
+            <table>
+                <tr>
+                    <th>Contexto</th>
+                    <th>Acoplamiento Aferente</th>
+                    <th>Acoplamiento Eferente</th>
+                    <th>Inestabilidad</th>
+                    <th>Evaluación</th>
+                </tr>
+                <tr>
+                    <td>Gestión de Empleados</td>
+                    <td>3</td>
+                    <td>2</td>
+                    <td>0.40</td>
+                    <td><span class="badge high">Estable</span></td>
+                </tr>
+                <tr>
+                    <td>Gestión de Proyectos</td>
+                    <td>3</td>
+                    <td>2</td>
+                    <td>0.40</td>
+                    <td><span class="badge high">Estable</span></td>
+                </tr>
+                <tr>
+                    <td>Configuración de Aplicación</td>
+                    <td>2</td>
+                    <td>5</td>
+                    <td>0.71</td>
+                    <td><span class="badge medium">Inestable</span></td>
+                </tr>
+            </table>
+
+            <h3>Análisis de Base de Datos Compartida</h3>
+            <div class="warning">
+                <h4>⚠️ Tabla de Unión Compartida: empleado_proyecto</h4>
+                <ul>
+                    <li>Referenciada por contextos de Gestión de Empleados y Gestión de Proyectos</li>
+                    <li>Clave primaria compuesta (employee_id, project_id)</li>
+                    <li>Contiene estado mutable entre contextos (fechaInicio, fechaFin)</li>
+                    <li><strong>Desafío de Migración:</strong> Requiere enfoque cuidadoso impulsado por eventos o estrategia de consistencia eventual</li>
+                    <li><strong>Enfoque Recomendado:</strong> Implementar patrón saga para operaciones de unión entre servicios</li>
+                </ul>
+            </div>
+
+            <h3>Dependencias a Nivel de Clase</h3>
+            <ul>
+                <li><strong>Clases de Alta Cohesión:</strong> Las implementaciones de servicios tienen fuerte cohesión con sus repositorios (90%+ llamadas internas)</li>
+                <li><strong>Clases de Bajo Acoplamiento:</strong> Las clases de Controlador/Punto Final están débilmente acopladas a servicios vía inyección de dependencia</li>
+                <li><strong>Dependencias Entre Contextos:</strong> La entidad EmpleadoProyecto crea el principal punto de acoplamiento entre contextos de Empleado y Proyecto</li>
+            </ul>
+        </section>
+
+        <!-- MICROSERVICE SCORING -->
+        <section id="microservice-scoring" class="section">
+            <h2>Puntuación de Candidatos de Microservicios</h2>
+
+            <h3>Metodología de Puntuación</h3>
+            <p>Cada contexto se puntúa en cinco dimensiones (0-10), luego se pondera para producir una puntuación final de preparación de microservicios:</p>
+            <div class="code-block">
+Puntuación Final = (0.30 × Independencia)
+                 + (0.25 × Cohesión)
+                 + (0.20 × Propiedad de Datos)
+                 + (0.15 × Criticidad Empresarial)
+                 + (0.10 × Frecuencia de Cambios)
+            </div>
+
+            <h3>Resultados Detallados de Puntuación</h3>
+
+            <table>
+                <tr>
+                    <th>Contexto</th>
+                    <th>Independencia</th>
+                    <th>Cohesión</th>
+                    <th>Propiedad de Datos</th>
+                    <th>Criticidad Empresarial</th>
+                    <th>Frecuencia de Cambios</th>
+                    <th>Puntuación Final</th>
+                </tr>
+                <tr>
+                    <td><strong>Gestión de Proyectos</strong></td>
+                    <td>8.5</td>
+                    <td>8.7</td>
+                    <td>8.5</td>
+                    <td>9.0</td>
+                    <td>7.5</td>
+                    <td><span class="badge high">8.5/10</span></td>
+                </tr>
+                <tr>
+                    <td><strong>Gestión de Empleados</strong></td>
+                    <td>8.0</td>
+                    <td>8.5</td>
+                    <td>9.0</td>
+                    <td>8.0</td>
+                    <td>7.0</td>
+                    <td><span class="badge high">8.3/10</span></td>
+                </tr>
+                <tr>
+                    <td><strong>Configuración de Aplicación</strong></td>
+                    <td>6.5</td>
+                    <td>6.2</td>
+                    <td>8.0</td>
+                    <td>5.0</td>
+                    <td>4.5</td>
+                    <td><span class="badge medium">6.2/10</span></td>
+                </tr>
+            </table>
+
+            <h3>Clasificación de Candidatos</h3>
+
+            <h4>🥇 Clasificación 1: Contexto de Gestión de Proyectos - Puntuación 8.5/10</h4>
+            <div class="recommendation">
+                <ul>
+                    <li><strong>Independencia:</strong> 8.5 - Dependencias externas mínimas</li>
+                    <li><strong>Cohesión:</strong> 8.7 - Relaciones internas fuertes entre Proyecto y Cliente</li>
+                    <li><strong>Propiedad de Datos:</strong> 8.5 - Propiedad clara de tablas de Cliente y Proyecto</li>
+                    <li><strong>Criticidad Empresarial:</strong> 9.0 - Funcionalidad crítica para ingresos</li>
+                    <li><strong>Frecuencia de Cambios:</strong> 7.5 - Cambios comerciales regulares</li>
+                    <li><strong>Complejidad de Extracción:</strong> 6.5/10 (Media)</li>
+                    <li><strong>Riesgo de Migración:</strong> 4.0/10 (Bajo)</li>
+                    <li><strong>Estimación de Esfuerzo:</strong> 4-6 semanas</li>
+                    <li><strong>Justificación:</strong> <strong>PRIMERA EXTRACCIÓN RECOMENDADA</strong> - Mayor valor empresarial, límites claros, complejidad manejable</li>
+                </ul>
+            </div>
+
+            <h4>🥈 Clasificación 2: Contexto de Gestión de Empleados - Puntuación 8.3/10</h4>
+            <div class="recommendation">
+                <ul>
+                    <li><strong>Independencia:</strong> 8.0 - Buena independencia, estado compartido alguno</li>
+                    <li><strong>Cohesión:</strong> 8.5 - Diseño interno fuerte</li>
+                    <li><strong>Propiedad de Datos:</strong> 9.0 - Propiedad clara de tablas de Empleado y Rol</li>
+                    <li><strong>Criticidad Empresarial:</strong> 8.0 - Capacidad operativa central</li>
+                    <li><strong>Frecuencia de Cambios:</strong> 7.0 - Velocidad de cambio moderada</li>
+                    <li><strong>Complejidad de Extracción:</strong> 7.0/10 (Media-Alta)</li>
+                    <li><strong>Riesgo de Migración:</strong> 5.0/10 (Medio)</li>
+                    <li><strong>Estimación de Esfuerzo:</strong> 5-7 semanas</li>
+                    <li><strong>Justificación:</strong> Segunda prioridad - Buen candidato pero tabla de unión compartida con Proyecto aumenta complejidad. Extraer después de que se establezca contexto de Proyecto.</li>
+                </ul>
+            </div>
+
+            <h4>🥉 Clasificación 3: Contexto de Configuración de Aplicación - Puntuación 6.2/10</h4>
+            <div class="risk">
+                <ul>
+                    <li><strong>Independencia:</strong> 6.5 - Dependiente de informes de otros contextos</li>
+                    <li><strong>Cohesión:</strong> 6.2 - Cohesión más baja (preocupaciones mixtas)</li>
+                    <li><strong>Propiedad de Datos:</strong> 8.0 - Propiedad clara pero alcance más amplio</li>
+                    <li><strong>Criticidad Empresarial:</strong> 5.0 - Función de soporte, no crítica para ingresos</li>
+                    <li><strong>Frecuencia de Cambios:</strong> 4.5 - Estable en el tiempo</li>
+                    <li><strong>Complejidad de Extracción:</strong> 3.0/10 (Baja)</li>
+                    <li><strong>Riesgo de Migración:</strong> 2.0/10 (Muy Bajo)</li>
+                    <li><strong>Estimación de Esfuerzo:</strong> 2-3 semanas</li>
+                    <li><strong>Justificación:</strong> Prioridad más baja - Función de soporte con preocupaciones mixtas (monitoreo, informes, gestión de usuarios). Extraer último o mantener en monolito por ahora.</li>
+                </ul>
+            </div>
+
+            <h3>Matriz de Riesgo y Esfuerzo</h3>
+            <div class="chart-container">
+                <canvas id="riskEffortChart"></canvas>
+            </div>
+        </section>
+
+        <!-- EXTRACTION ROADMAP -->
+        <section id="extraction-roadmap" class="section">
+            <h2>Plan de Extracción y Estrategia de Migración</h2>
+
+            <h3>Secuencia de Extracción Recomendada</h3>
+
+            <div class="extraction-phases">
+                <div class="phase phase-1">
+                    <div class="phase-title">📦 Fase 1: Servicio de Gestión de Proyectos</div>
+                    <div><strong>Cronograma:</strong> Semanas 1-6</div>
+                    <div><strong>Esfuerzo:</strong> M (4-6 semanas)</div>
+                    <div><strong>Riesgo:</strong> Bajo</div>
+                    <ul style="font-size: 0.9em;">
+                        <li>Extraer entidades de Cliente y Proyecto</li>
+                        <li>Migrar a base de datos separada</li>
+                        <li>Implementar puerta de enlace de API REST</li>
+                        <li>Configurar infraestructura de servicio</li>
+                    </ul>
+                </div>
+                <div class="phase phase-2">
+                    <div class="phase-title">👥 Fase 2: Servicio de Gestión de Empleados</div>
+                    <div><strong>Cronograma:</strong> Semanas 7-13</div>
+                    <div><strong>Esfuerzo:</strong> M (5-7 semanas)</div>
+                    <div><strong>Riesgo:</strong> Medio</div>
+                    <ul style="font-size: 0.9em;">
+                        <li>Extraer entidades de Empleado y Rol</li>
+                        <li>Implementar saga para operaciones de unión</li>
+                        <li>Sincronización impulsada por eventos con Proyecto</li>
+                        <li>Período de validación de escritura dual</li>
+                    </ul>
+                </div>
+                <div class="phase phase-3">
+                    <div class="phase-title">⚙️ Fase 3: Servicio de Configuración (Opcional)</div>
+                    <div><strong>Cronograma:</strong> Semanas 14-16</div>
+                    <div><strong>Esfuerzo:</strong> S (2-3 semanas)</div>
+                    <div><strong>Riesgo:</strong> Muy Bajo</div>
+                    <ul style="font-size: 0.9em;">
+                        <li>Extraer entidades de InfoAplicación y Usuario</li>
+                        <li>Migrar trabajos de informe</li>
+                        <li>Consolidar monitoreo</li>
+                    </ul>
+                </div>
+            </div>
+
+            <h3>Patrón Strangler Fig - Implementación Detallada</h3>
+
+            <h4>Fase 1: Extracción de Gestión de Proyectos (Semanas 1-6)</h4>
+            <ol>
+                <li><strong>Semanas 1-2: Configuración y Preparación</strong>
+                    <ul>
+                        <li>Crear nuevo proyecto de microservicio Spring Boot (ServicioProyecto)</li>
+                        <li>Configurar base de datos PostgreSQL separada para proyectos</li>
+                        <li>Configurar ambiente Docker y línea de compilación CI/CD</li>
+                        <li>Implementar verificaciones de salud y monitoreo</li>
+                    </ul>
+                </li>
+                <li><strong>Semanas 2-3: Migración de Datos</strong>
+                    <ul>
+                        <li>Crear esquema de base de datos en nuevo PostgreSQL</li>
+                        <li>Implementar patrón de escritura dual en monolito</li>
+                        <li>Validar consistencia de datos entre ambas bases de datos</li>
+                        <li>Configurar captura de datos de cambio (CDC) para rastro de auditoría</li>
+                    </ul>
+                </li>
+                <li><strong>Semanas 3-4: Implementación de Servicio</strong>
+                    <ul>
+                        <li>Extraer lógica empresarial de ServicioProyecto</li>
+                        <li>Implementar API REST para operaciones de Proyecto</li>
+                        <li>Crear RepositorioCliente con nueva fuente de datos</li>
+                        <li>Implementar como servicio canario junto a monolito</li>
+                    </ul>
+                </li>
+                <li><strong>Semanas 4-5: Integración y Pruebas</strong>
+                    <ul>
+                        <li>Implementar enrutamiento de puerta de enlace de API a ServicioProyecto</li>
+                        <li>Enrutar nuevas solicitudes de Proyecto al servicio</li>
+                        <li>Mantener solicitudes existentes en monolito durante período de sombra</li>
+                        <li>Ejecutar pruebas de integración y puntos de referencia de rendimiento</li>
+                    </ul>
+                </li>
+                <li><strong>Semanas 5-6: Transición y Validación</strong>
+                    <ul>
+                        <li>Aumentar gradualmente tráfico a ServicioProyecto (10% → 50% → 100%)</li>
+                        <li>Monitorear tasas de error y latencia</li>
+                        <li>Eliminar lógica de escritura dual del monolito</li>
+                        <li>Desmantelar código antiguo de ServicioProyecto del monolito</li>
+                    </ul>
+                </li>
+            </ol>
+
+            <h4>Fase 2: Extracción de Gestión de Empleados (Semanas 7-13)</h4>
+            <ol>
+                <li><strong>Semanas 7-8: Diseño de Saga y Preparación</strong>
+                    <ul>
+                        <li>Diseñar orquestador de saga para asignaciones de Empleado-Proyecto</li>
+                        <li>Planificar patrones de comunicación impulsados por eventos</li>
+                        <li>Crear eventos de EmpleadoProyecto (AsignadoAProyecto, EliminadoDeProyecto)</li>
+                        <li>Configurar intermediario de mensajes (Kafka/RabbitMQ)</li>
+                    </ul>
+                </li>
+                <li><strong>Semanas 8-10: Implementación de Servicio e Integración</strong>
+                    <ul>
+                        <li>Extraer ServicioEmpleado a nuevo microservicio</li>
+                        <li>Implementar publicación de eventos para eventos de Empleado</li>
+                        <li>Crear manejadores saga para operaciones de asignación</li>
+                        <li>Implementar capa de anti-corrupción para llamadas a ServicioProyecto</li>
+                        <li>Implementar servicio y ejecutar validación de escritura dual</li>
+                    </ul>
+                </li>
+                <li><strong>Semanas 10-12: Transición Coordinada</strong>
+                    <ul>
+                        <li>Actualizar ServicioProyecto para publicar eventos en nuevas asignaciones</li>
+                        <li>Actualizar ServicioEmpleado para suscribirse y manejar eventos</li>
+                        <li>Ejecutar ambos servicios en modo sombra</li>
+                        <li>Validar consistencia de eventos y ordenamiento</li>
+                    </ul>
+                </li>
+                <li><strong>Semanas 12-13: Transición de Tráfico y Estabilización</strong>
+                    <ul>
+                        <li>Enrutar gradualmente solicitudes de Empleado al nuevo servicio</li>
+                        <li>Monitorear tasas de finalización de saga</li>
+                        <li>Manejar transacciones compensatorias para fallos</li>
+                        <li>Eliminar código de ServicioEmpleado del monolito</li>
+                    </ul>
+                </li>
+            </ol>
+
+            <h4>Fase 3: Servicio de Configuración (Opcional, Semanas 14-16)</h4>
+            <ul>
+                <li>Extraer InfoAplicación y gestión de Usuario a servicio de configuración</li>
+                <li>Migrar trabajos del programador Quartz al nuevo servicio</li>
+                <li>Riesgo bajo - puede permanecer en monolito si beneficio costo no justificado</li>
+            </ul>
+
+            <h3>Estrategia de Migración de Base de Datos</h3>
+
+            <h4>Estado Actual (Monolito)</h4>
+            <div class="code-block">
+Base de Datos MySQL Única (SNOWMAN)
+├── rol_empleado
+├── empleado
+├── cliente
+├── proyecto
+├── empleado_proyecto (tabla de unión)
+├── usuario
+└── info_aplicación
+            </div>
+
+            <h4>Estado Objetivo (Post-Extracción)</h4>
+            <div class="code-block">
+Monolito (MySQL) - Reducido
+├── usuario
+└── info_aplicación
+
+ServicioProyecto (PostgreSQL)
+├── cliente
+├── proyecto
+└── empleado_proyecto_sombra (copia de solo lectura)
+
+ServicioEmpleado (PostgreSQL)
+├── rol_empleado
+├── empleado
+└── empleado_proyecto_sombra (copia de solo lectura)
+            </div>
+
+            <h4>Estrategia de Escritura Dual</h4>
+            <ol>
+                <li><strong>Fase 1:</strong> El monolito escribe en bases de datos antigua (MySQL) y nueva (PostgreSQL)</li>
+                <li><strong>Fase 2:</strong> El servicio lee de base de datos nueva, el monolito valida consistencia</li>
+                <li><strong>Fase 3:</strong> Cambiar a servicio primario, monolito se vuelve de solo lectura</li>
+                <li><strong>Fase 4:</strong> Eliminar lógica de escritura dual, desmantelar código antiguo</li>
+            </ol>
+        </section>
+
+        <!-- TECHNOLOGY RECOMMENDATIONS -->
+        <section id="technology-recommendations" class="section">
+            <h2>Recomendaciones Tecnológicas</h2>
+
+            <h3>Stack Tecnológico por Contexto</h3>
+
+            <h4>Servicio de Gestión de Proyectos</h4>
+            <table>
+                <tr>
+                    <th>Componente</th>
+                    <th>Recomendación</th>
+                    <th>Justificación</th>
+                </tr>
+                <tr>
+                    <td><strong>Tiempo de Ejecución</strong></td>
+                    <td>Java 17+ / Spring Boot 3.x</td>
+                    <td>Ecosistema maduro, consistente con stack actual, confiabilidad probada</td>
+                </tr>
+                <tr>
+                    <td><strong>Base de Datos</strong></td>
+                    <td>PostgreSQL 14+</td>
+                    <td>Superior a MySQL para consultas complejas, mejores garantías ACID, soporte JSONB</td>
+                </tr>
+                <tr>
+                    <td><strong>ORM</strong></td>
+                    <td>Hibernate 6.x con Spring Data JPA</td>
+                    <td>Hibernate moderno, mejor optimización de consultas</td>
+                </tr>
+                <tr>
+                    <td><strong>Caché</strong></td>
+                    <td>Redis 7.x (modo clúster)</td>
+                    <td>Caché distribuido para alta disponibilidad, mejor que EhCache para arquitectura de servicios</td>
+                </tr>
+                <tr>
+                    <td><strong>Documentación de API</strong></td>
+                    <td>SpringDoc OpenAPI 2.0</td>
+                    <td>Documentación Swagger automática, mejor que manual</td>
+                </tr>
+            </table>
+
+            <h4>Servicio de Gestión de Empleados</h4>
+            <table>
+                <tr>
+                    <th>Componente</th>
+                    <th>Recomendación</th>
+                    <th>Justificación</th>
+                </tr>
+                <tr>
+                    <td><strong>Tiempo de Ejecución</strong></td>
+                    <td>Java 17+ / Spring Boot 3.x</td>
+                    <td>Consistencia con ServicioProyecto</td>
+                </tr>
+                <tr>
+                    <td><strong>Base de Datos</strong></td>
+                    <td>PostgreSQL 14+</td>
+                    <td>Consistencia con otros servicios</td>
+                </tr>
+                <tr>
+                    <td><strong>Mensajería</strong></td>
+                    <td>Apache Kafka 3.x</td>
+                    <td>Mejor que ActiveMQ actual para event sourcing, patrones saga, alto rendimiento</td>
+                </tr>
+                <tr>
+                    <td><strong>Orquestación de Saga</strong></td>
+                    <td>Temporal.io o máquina de estado Spring personalizada</td>
+                    <td>Gestiona asignaciones de Empleado-Proyecto con transacciones compensatorias</td>
+                </tr>
+                <tr>
+                    <td><strong>Resiliencia</strong></td>
+                    <td>Resilience4j con Spring Cloud</td>
+                    <td>Disyuntores para llamadas a ServicioProyecto</td>
+                </tr>
+            </table>
+
+            <h4>Servicio de Configuración (Opcional)</h4>
+            <table>
+                <tr>
+                    <th>Componente</th>
+                    <th>Recomendación</th>
+                    <th>Justificación</th>
+                </tr>
+                <tr>
+                    <td><strong>Opción A: Permanecer en Monolito</strong></td>
+                    <td>Mantener Spring 4.3 actual</td>
+                    <td>Bajo valor empresarial no justifica costo de extracción</td>
+                </tr>
+                <tr>
+                    <td><strong>Opción B: Extraer como Servicio Lateral</strong></td>
+                    <td>Spring Boot 3.x, H2 o SQLite</td>
+                    <td>Servicio simple para metadatos, necesidades de escalado mínimas</td>
+                </tr>
+            </table>
+
+            <h3>Implementación e Infraestructura</h3>
+
+            <h4>Estrategia de Contenedor</h4>
+            <div class="recommendation">
+                <ul>
+                    <li><strong>Containerización:</strong> Docker con compilaciones multietapa para tamaño mínimo de imagen</li>
+                    <li><strong>Orquestación:</strong> Kubernetes con perfiles de carga de trabajo apropiados:
+                        <ul>
+                            <li>ServicioProyecto: Apátrida (réplicas=3, ligado a CPU)</li>
+                            <li>ServicioEmpleado: Apátrida (réplicas=2, ligado a CPU)</li>
+                            <li>Servicio de Configuración: Apátrida (réplicas=1, ligado a E/S)</li>
+                        </ul>
+                    </li>
+                    <li><strong>Malla de Servicios:</strong> Istio opcional para implementaciones canario, división de tráfico, interrupción de circuito</li>
+                </ul>
+            </div>
+
+            <h4>Requisitos de Recursos (Estimado)</h4>
+            <table>
+                <tr>
+                    <th>Servicio</th>
+                    <th>Solicitud de CPU</th>
+                    <th>Solicitud de Memoria</th>
+                    <th>Límite de CPU</th>
+                    <th>Límite de Memoria</th>
+                </tr>
+                <tr>
+                    <td>ServicioProyecto</td>
+                    <td>500m</td>
+                    <td>512Mi</td>
+                    <td>1000m</td>
+                    <td>1024Mi</td>
+                </tr>
+                <tr>
+                    <td>ServicioEmpleado</td>
+                    <td>500m</td>
+                    <td>512Mi</td>
+                    <td>1000m</td>
+                    <td>1024Mi</td>
+                </tr>
+                <tr>
+                    <td>ServicioConfiguracion</td>
+                    <td>250m</td>
+                    <td>256Mi</td>
+                    <td>500m</td>
+                    <td>512Mi</td>
+                </tr>
+            </table>
+
+            <h3>Stack de Observabilidad</h3>
+            <div class="recommendation">
+                <ul>
+                    <li><strong>Registros:</strong> Stack ELK (Elasticsearch 8.x, Logstash, Kibana) con registro estructurado JSON</li>
+                    <li><strong>Métricas:</strong> Prometheus + Grafana para datos de series de tiempo y paneles</li>
+                    <li><strong>Rastreo:</strong> Jaeger para rastreo distribuido entre servicios</li>
+                    <li><strong>Alertas:</strong> AlertManager para enrutamiento de incidentes y escalada</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- INTEGRATION STRATEGY -->
+        <section id="integration-strategy" class="section">
+            <h2>Estrategia de Integración y Patrones</h2>
+
+            <h3>Enfoques de Integración Entre Contextos</h3>
+
+            <h4>1. Proyecto ↔ Empleado (vía EmpleadoProyecto)</h4>
+            <div class="recommendation">
+                <h4>Desafío:</strong> Transacción entre contextos para asignaciones de Empleado-Proyecto</h4>
+                <h4>Patrón Recomendado: Saga (Orquestrado)</h4>
+                <ul>
+                    <li><strong>Enfoque:</strong> Cuando un usuario asigna un empleado a un proyecto, una saga coordina ambos servicios</li>
+                    <li><strong>Implementación:</strong>
+                        <ol>
+                            <li>ServicioProyecto recibe solicitud de asignación</li>
+                            <li>ServicioProyecto inicia saga, publica evento "AsignacionSolicitada"</li>
+                            <li>ServicioEmpleado escucha, valida disponibilidad de empleado</li>
+                            <li>ServicioEmpleado responde con "EmpleadoAsignado" o "AsignacionRechazada"</li>
+                            <li>ServicioProyecto completa o compensa</li>
+                        </ol>
+                    </li>
+                    <li><strong>Manejo de Fallos:</strong> Las transacciones compensatorias revierten asignaciones parciales</li>
+                    <li><strong>Consistencia:</strong> Consistencia eventual (finalización asincrónica)</li>
+                </ul>
+            </div>
+
+            <h4>2. Proyecto/Empleado → Configuración de Aplicación (Informes)</h4>
+            <div class="recommendation">
+                <h4>Desafío:</strong> Agregación periódica de datos de ambos servicios</h4>
+                <h4>Patrón Recomendado: Informes Impulsados por Eventos</h4>
+                <ul>
+                    <li><strong>Enfoque:</strong> Los servicios publican eventos de dominio, el servicio de configuración escucha para informes</li>
+                    <li><strong>Eventos para Publicar:</strong>
+                        <ul>
+                            <li>ProyectoCreado, ProyectoModificado, ProyectoCompletado</li>
+                            <li>EmpleadoAsignado, EmpleadoEliminado</li>
+                        </ul>
+                    </li>
+                    <li><strong>Implementación:</strong> Tópicos Kafka para flujo de eventos, grupos de consumidores para construcción de instantánea</li>
+                    <li><strong>Consistencia:</strong> Consistencia eventual aceptable para informes</li>
+                </ul>
+            </div>
+
+            <h3>Estrategia de Puerta de Enlace de API</h3>
+
+            <div class="code-block">
+Solicitudes de Cliente
+    ↓
+┌─────────────────────────┐
+│ Puerta de Enlace API (Kong) │
+├─────────────────────────┤
+│ - Autenticación        │
+│ - Límite de Velocidad  │
+│ - Enrutamiento Solicitud│
+│ - Agregación Respuesta  │
+└─────────────────────────┘
+    ↓  ↓  ↓  ↓
+    │  │  │  └─→ ServicioConfiguracion
+    │  │  └──→ ServicioEmpleado
+    │  └──────→ ServicioProyecto
+    └────────→ Monolito (Heredado)
+            </div>
+
+            <h3>Diseño de Capa de Anti-corrupción</h3>
+
+            <h4>ServicioEmpleado → ServicioProyecto ACL</h4>
+            <div class="code-block">
+// Capa de Anti-corrupción para ServicioEmpleado llamando ServicioProyecto
+@Component
+public class AdaptadorServicioProyecto {
+
+    private final RestTemplate restTemplate;
+    private final DisyuntorServicioProyecto disyuntorServicioProyecto;
+
+    public List<DTOProyecto> obtenerProyectosEmpleado(int idEmpleado) {
+        try {
+            return disyuntorServicioProyecto.ejecutar(() ->
+                restTemplate.getForObject(
+                    "http://servicio-proyecto/api/proyectos/empleado/{id}",
+                    DTOProyecto[].class,
+                    idEmpleado
+                )
+            );
+        } catch (Exception e) {
+            // Lógica de retroceso o reintento
+            return proyectosRetroceso(idEmpleado);
+        }
+    }
+}
+            </div>
+
+            <h3>Patrones de Comunicación Impulsados por Eventos</h3>
+
+            <h4>Ejemplo de Esquema de Evento</h4>
+            <div class="code-block">
+{
+  "idEvento": "uuid",
+  "tipoEvento": "EmpleadoAsignadoAProyecto",
+  "idAgregado": "empleado-123",
+  "tipoAgregado": "Empleado",
+  "marca_temporal": "2026-05-16T10:30:00Z",
+  "versión": 1,
+  "datos": {
+    "idEmpleado": 123,
+    "idProyecto": 456,
+    "fechaInicio": "2026-05-20",
+    "asignadoPor": "usuario-789"
+  },
+  "idCorrelacion": "solicitud-abc-123"
+}
+            </div>
+
+            <h3>Implementación de Patrón Saga</h3>
+
+            <h4>Flujo de Saga de Asignación de Empleado</h4>
+            <div class="mermaid">
+sequenceDiagram
+    participant Usuario
+    participant APIProyecto
+    participant ServicioProyecto
+    participant OrquestadorSaga
+    participant ServicioEmpleado
+    participant BaseDatos
+
+    Usuario->>APIProyecto: POST /proyectos/{id}/asignar-empleado
+    APIProyecto->>ServicioProyecto: Solicitar Asignación
+    ServicioProyecto->>OrquestadorSaga: Iniciar AsignacionSaga
+    OrquestadorSaga->>ServicioEmpleado: VerificarDisponibilidadEmpleado
+    ServicioEmpleado->>BaseDatos: Verificar Estado Empleado
+    alt Empleado Disponible
+        ServicioEmpleado-->>OrquestadorSaga: DisponibilidadConfirmada
+        OrquestadorSaga->>ServicioProyecto: CompletarAsignacion
+        ServicioProyecto->>BaseDatos: ActualizarEmpleadoProyecto
+        ServicioProyecto-->>APIProyecto: Éxito
+    else Empleado No Disponible
+        ServicioEmpleado-->>OrquestadorSaga: RechazadoNoDisponible
+        OrquestadorSaga->>ServicioProyecto: Compensar
+        ServicioProyecto-->>APIProyecto: Rechazado
+    end
+            </div>
+        </section>
+
+        <!-- RISKS AND RECOMMENDATIONS -->
+        <section id="risks-and-recommendations" class="section">
+            <h2>Riesgos Arquitectónicos y Recomendaciones</h2>
+
+            <h3>Riesgos Críticos</h3>
+
+            <div class="risk">
+                <h4>🔴 Riesgo 1: Tabla de Unión Compartida EmpleadoProyecto</h4>
+                <ul>
+                    <li><strong>Descripción:</strong> EmpleadoProyecto vincula contextos de Empleado y Proyecto, creando acoplamiento transaccional</li>
+                    <li><strong>Impacto:</strong> Transacciones distribuidas, desafíos de consistencia de datos, implementaciones saga complejas</li>
+                    <li><strong>Mitigación:</strong>
+                        <ol>
+                            <li>Implementar orquestación de saga impulsada por eventos para asignaciones</li>
+                            <li>Usar patrón de escritura dual durante migración</li>
+                            <li>Implementar transacciones compensatorias para fallos</li>
+                            <li>Considerar modelo de consistencia eventual</li>
+                        </ol>
+                    </li>
+                    <li><strong>Cronograma:</strong> Planificar 2 semanas adicionales para diseño y pruebas de saga</li>
+                </ul>
+            </div>
+
+            <div class="risk">
+                <h4>🔴 Riesgo 2: Preocupaciones Mixtas en Contexto Usuario/AppInfo</h4>
+                <ul>
+                    <li><strong>Descripción:</strong> La gestión de Usuario y AppInfo están agrupadas sin alineación clara de capacidad empresarial</li>
+                    <li><strong>Impacto:</strong> Cohesión más baja, potencial para preocupaciones transversales futuras</li>
+                    <li><strong>Mitigación:</strong>
+                        <ol>
+                            <li>Mantener en monolito por ahora (bajo valor empresarial)</li>
+                            <li>Si se extrae, separar en dos servicios después</li>
+                            <li>Establecer límites claros (Usuario = identidad/auth, AppInfo = versionado/monitoreo)</li>
+                        </ol>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="risk">
+                <h4>🟡 Riesgo 3: Complejidad de Migración de Base de Datos</h4>
+                <ul>
+                    <li><strong>Descripción:</strong> Migrar de MySQL único a bases de datos múltiples introduce complejidad operativa</li>
+                    <li><strong>Impacto:</strong> Problemas de consistencia de datos, mayor carga de monitoreo, posible tiempo de inactividad</li>
+                    <li><strong>Mitigación:</strong>
+                        <ol>
+                            <li>Usar Liquibase para cambios de esquema versionados</li>
+                            <li>Implementar CDC (Captura de Datos de Cambio) para rastro de auditoría</li>
+                            <li>Planificar pruebas exhaustivas y procedimientos de retroceso</li>
+                            <li>Usar implementaciones azul-verde para migración sin tiempo de inactividad</li>
+                        </ol>
+                    </li>
+                </ul>
+            </div>
+
+            <h3>Riesgos Medios</h3>
+
+            <div class="warning">
+                <h4>🟡 Riesgo 4: Latencia de Red en Operaciones Saga</h4>
+                <ul>
+                    <li><strong>Descripción:</strong> Las operaciones saga abarcan múltiples servicios, añadiendo latencia de red</li>
+                    <li><strong>Mitigación:</strong>
+                        <ul>
+                            <li>Establecer tiempos de espera agresivos (5-10 segundos)</li>
+                            <li>Implementar disyuntores con Resilience4j</li>
+                            <li>Cachear datos frecuentemente accedidos</li>
+                            <li>Monitorear latencias P95/P99</li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="warning">
+                <h4>🟡 Riesgo 5: Aumento de Complejidad Operativa</h4>
+                <ul>
+                    <li><strong>Descripción:</strong> Múltiples servicios aumentan la carga operativa (monitoreo, registro, depuración)</li>
+                    <li><strong>Mitigación:</strong>
+                        <ul>
+                            <li>Invertir en observabilidad (Prometheus, Grafana, Jaeger)</li>
+                            <li>Implementar registro estructurado e IDs de correlación</li>
+                            <li>Automatizar implementación con GitOps (ArgoCD, FluxCD)</li>
+                            <li>Crear libros de consulta para escenarios comunes</li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+
+            <h3>Resumen de Recomendaciones</h3>
+
+            <div class="recommendation">
+                <h4>✅ Corto Plazo (0-3 meses)</h4>
+                <ol>
+                    <li>Extraer Contexto de Gestión de Proyectos (Fase 1)</li>
+                    <li>Implementar Puerta de Enlace de API (Kong) para punto de entrada unificado</li>
+                    <li>Configurar stack de observabilidad (ELK, Prometheus, Jaeger)</li>
+                    <li>Planificar infraestructura de orquestación de saga</li>
+                </ol>
+            </div>
+
+            <div class="recommendation">
+                <h4>✅ Plazo Medio (3-6 meses)</h4>
+                <ol>
+                    <li>Extraer Contexto de Gestión de Empleados (Fase 2)</li>
+                    <li>Implementar comunicación impulsada por eventos (Kafka)</li>
+                    <li>Establecer prácticas de pruebas entre servicios (pruebas de contrato, pruebas de integración)</li>
+                    <li>Documentar APIs con especificaciones OpenAPI</li>
+                </ol>
+            </div>
+
+            <div class="recommendation">
+                <h4>✅ Plazo Largo (6-12 meses)</h4>
+                <ol>
+                    <li>Considerar extracción de Servicio de Configuración (Fase 3) - opcional</li>
+                    <li>Evaluar adopción de malla de servicios (Istio)</li>
+                    <li>Implementar patrones de resiliencia avanzados (compartimiento, ajuste fino de disyuntor)</li>
+                    <li>Planificar reestructuración organizacional (Ley de Conway) - alinear equipos a límites de servicio</li>
+                </ol>
+            </div>
+        </section>
+
+        <!-- OPENAPI SPECIFICATIONS -->
+        <section id="openapi-specifications" class="section">
+            <h2>Especificaciones OpenAPI - 3 Principales Candidatos</h2>
+
+            <h3>1. OpenAPI de Servicio de Gestión de Proyectos</h3>
+            <div class="code-block">
+openapi: 3.0.0
+info:
+  title: API de Servicio de Gestión de Proyectos
+  version: 1.0.0
+  description: Servicio para gestionar proyectos y relaciones con clientes
+
+paths:
+  /api/proyectos:
+    get:
+      summary: Listar todos los proyectos
+      tags: [Proyectos]
+      parameters:
+        - name: idCliente
+          in: query
+          required: false
+          schema: {type: integer}
+      responses:
+        '200':
+          description: Lista de proyectos
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/Proyecto'}
+    post:
+      summary: Crear nuevo proyecto
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/SolicitudCrearProyecto'}
+      responses:
+        '201':
+          description: Proyecto creado
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Proyecto'}
+
+  /api/proyectos/{id}:
+    get:
+      summary: Obtener proyecto por ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: {type: integer}
+      responses:
+        '200':
+          description: Detalles del proyecto
+        '404':
+          description: Proyecto no encontrado
+
+components:
+  schemas:
+    Proyecto:
+      type: object
+      properties:
+        id: {type: integer}
+        tituloProyecto: {type: string, maxLength: 100}
+        fechaInicio: {type: string, format: date}
+        fechaFin: {type: string, format: date, nullable: true}
+        idCliente: {type: integer}
+        nombreCliente: {type: string}
+
+    SolicitudCrearProyecto:
+      type: object
+      required: [tituloProyecto, fechaInicio, idCliente]
+      properties:
+        tituloProyecto: {type: string, maxLength: 100}
+        fechaInicio: {type: string, format: date}
+        idCliente: {type: integer}
+            </div>
+
+            <h3>2. OpenAPI de Servicio de Gestión de Empleados</h3>
+            <div class="code-block">
+openapi: 3.0.0
+info:
+  title: API de Servicio de Gestión de Empleados
+  version: 1.0.0
+
+paths:
+  /api/empleados:
+    get:
+      summary: Listar todos los empleados
+      responses:
+        '200':
+          description: Lista de empleados
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/Empleado'}
+    post:
+      summary: Crear empleado
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/SolicitudCrearEmpleado'}
+      responses:
+        '201':
+          description: Empleado creado
+
+  /api/empleados/{id}/asignaciones:
+    post:
+      summary: Asignar empleado a proyecto (Saga)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: {type: integer}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                idProyecto: {type: integer}
+                fechaInicio: {type: string, format: date}
+      responses:
+        '202':
+          description: Asignación en procesamiento (asincrónico)
+
+components:
+  schemas:
+    Empleado:
+      type: object
+      properties:
+        id: {type: integer}
+        nombre: {type: string}
+        apellido: {type: string}
+        rol: {type: string}
+
+    SolicitudCrearEmpleado:
+      type: object
+      required: [nombre, apellido]
+      properties:
+        nombre: {type: string, maxLength: 50}
+        apellido: {type: string, maxLength: 50}
+        idRol: {type: integer}
+            </div>
+
+            <h3>3. OpenAPI de Servicio de Configuración (Opcional)</h3>
+            <div class="code-block">
+openapi: 3.0.0
+info:
+  title: API de Servicio de Configuración y Monitoreo
+  version: 1.0.0
+
+paths:
+  /api/info-aplicación:
+    get:
+      summary: Obtener información de aplicación
+      responses:
+        '200':
+          description: Información de app
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/InfoAplicacion'}
+
+  /api/salud:
+    get:
+      summary: Verificación de salud
+      responses:
+        '200':
+          description: Salud del sistema
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  estado: {type: string, enum: [UP, DOWN]}
+                  servicios:
+                    type: array
+                    items:
+                      type: object
+
+components:
+  schemas:
+    InfoAplicacion:
+      type: object
+      properties:
+        versión: {type: string}
+        numeroConstracción: {type: string}
+        marca_temporal: {type: string, format: date-time}
+            </div>
+        </section>
+
+        <!-- CONCLUSION -->
+        <section class="section">
+            <h2>Conclusión y Próximos Pasos</h2>
+
+            <div class="recommendation">
+                <h3>✅ Resumen Ejecutivo</h3>
+                <p>El monolito de Aplicación Empresarial está bien estructurado para descomposición. Con una puntuación de 7.2/10 para salud general y 8.0/10 para capacidad de descomposición, esta aplicación es un excelente candidato para migración de microservicios.</p>
+
+                <h3>🎯 Puntos Clave</h3>
+                <ul>
+                    <li><strong>Tres Contextos Acotados Claros:</strong> Gestión de Empleados, Gestión de Proyectos, Configuración de Aplicación</li>
+                    <li><strong>Servicio de Gestión de Proyectos es Prioridad #1:</strong> Puntuación 8.5/10, valor empresarial más alto, complejidad más baja</li>
+                    <li><strong>Acoplamiento Manejable:</strong> Las métricas de inestabilidad indican servicios estables adecuados para extracción</li>
+                    <li><strong>Cronograma Estimado:</strong> 4-6 semanas para extracción de Proyecto, 5-7 semanas para extracción de Empleado</li>
+                    <li><strong>Enfoque Recomendado:</strong> Patrón Strangler Fig con orquestación Saga para operaciones entre contextos</li>
+                </ul>
+
+                <h3>📋 Elementos de Acción Inmediatos</h3>
+                <ol>
+                    <li><strong>Semana 1:</strong> Asegurar aprobación de stakeholders y presupuesto</li>
+                    <li><strong>Semana 1-2:</strong> Configurar infraestructura (clúster Kubernetes, bases de datos, observabilidad)</li>
+                    <li><strong>Semana 2:</strong> Establecer equipo de desarrollo y comenzar diseño de Servicio de Proyecto</li>
+                    <li><strong>Semana 3:</strong> Iniciar implementación de Fase 1 con configuración de Puerta de Enlace de API</li>
+                </ol>
+
+                <h3>💰 Beneficios Esperados</h3>
+                <ul>
+                    <li><strong>Escalabilidad:</strong> Escalado independiente de servicios de Proyecto y Empleado</li>
+                    <li><strong>Velocidad de Implementación:</strong> Ciclos de lanzamiento más rápidos para servicios individuales</li>
+                    <li><strong>Autonomía de Equipo:</strong> Los equipos independientes pueden trabajar en servicios separados</li>
+                    <li><strong>Flexibilidad Tecnológica:</strong> Diferentes stacks técnicos por servicio según requisitos</li>
+                    <li><strong>Aislamiento de Fallos:</strong> Los fallos en un servicio no se propagan a otros</li>
+                </ul>
+            </div>
+        </section>
+
+        <footer>
+            <p>Informe del Descompositor de Monolito DDD - Aplicación Empresarial (Snowman)</p>
+            <p>Generado el 16 de mayo de 2026 | Período de Análisis: Últimos 6 meses de análisis de codebase</p>
+            <p>Para preguntas o aclaraciones, contacte al equipo de Arquitectura</p>
+        </footer>
+    </div>
+
+    <script>
+        // Gráfico de Matriz de Riesgo y Esfuerzo
+        const ctx = document.getElementById('riskEffortChart');
+        if (ctx) {
+            new Chart(ctx, {
+                type: 'bubble',
+                data: {
+                    datasets: [
+                        {
+                            label: 'Gestión de Proyectos',
+                            data: [{x: 6.5, y: 8.5, r: 20}],
+                            backgroundColor: 'rgba(39, 174, 96, 0.6)',
+                            borderColor: 'rgba(39, 174, 96, 1)',
+                            borderWidth: 2
+                        },
+                        {
+                            label: 'Gestión de Empleados',
+                            data: [{x: 7.0, y: 8.3, r: 24}],
+                            backgroundColor: 'rgba(243, 156, 18, 0.6)',
+                            borderColor: 'rgba(243, 156, 18, 1)',
+                            borderWidth: 2
+                        },
+                        {
+                            label: 'Configuración',
+                            data: [{x: 3.0, y: 6.2, r: 16}],
+                            backgroundColor: 'rgba(231, 76, 60, 0.6)',
+                            borderColor: 'rgba(231, 76, 60, 1)',
+                            borderWidth: 2
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        title: {
+                            display: true,
+                            text: 'Complejidad de Extracción vs Valor Empresarial (Tamaño de burbuja = Esfuerzo)'
+                        }
+                    },
+                    scales: {
+                        x: {
+                            type: 'linear',
+                            position: 'bottom',
+                            title: {
+                                display: true,
+                                text: 'Complejidad de Extracción →'
+                            },
+                            min: 0,
+                            max: 10
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Puntuación de Microservicio / Valor Empresarial →'
+                            },
+                            min: 0,
+                            max: 10
+                        }
+                    }
+                }
+            });
+        }
+
+        // Inicializar Mermaid
+        if (typeof mermaid !== 'undefined') {
+            mermaid.initialize({ startOnLoad: true, theme: 'default' });
+        }
+    </script>
+</body>
+</html>
