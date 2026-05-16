@@ -1,0 +1,1757 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DDD Monolith Decomposer - Enterprise Application (Snowman)</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            padding: 20px;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 40px;
+        }
+        header {
+            border-bottom: 3px solid #2c3e50;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+        h1 {
+            color: #2c3e50;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        h2 {
+            color: #34495e;
+            font-size: 2em;
+            margin-top: 40px;
+            margin-bottom: 20px;
+            border-left: 5px solid #3498db;
+            padding-left: 15px;
+        }
+        h3 {
+            color: #34495e;
+            font-size: 1.3em;
+            margin-top: 25px;
+            margin-bottom: 15px;
+        }
+        h4 {
+            color: #555;
+            font-size: 1.1em;
+            margin-top: 15px;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            color: #7f8c8d;
+            font-size: 1.2em;
+            margin-bottom: 10px;
+        }
+        .date-generated {
+            color: #95a5a6;
+            font-size: 0.9em;
+            margin-top: 10px;
+        }
+        .metric {
+            display: inline-block;
+            background: #ecf0f1;
+            padding: 10px 20px;
+            border-radius: 5px;
+            margin: 5px;
+            border-left: 4px solid #3498db;
+        }
+        .section {
+            margin-bottom: 40px;
+        }
+        .bounded-context {
+            background: #f8f9fa;
+            border-left: 4px solid #3498db;
+            padding: 20px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+        .bounded-context.candidate-1 {
+            border-left-color: #27ae60;
+            background: #f0fdf4;
+        }
+        .bounded-context.candidate-2 {
+            border-left-color: #f39c12;
+            background: #fffbf0;
+        }
+        .bounded-context.candidate-3 {
+            border-left-color: #e74c3c;
+            background: #fef5f5;
+        }
+        .metric-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .metric-card {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 15px;
+            text-align: center;
+        }
+        .metric-card .label {
+            font-size: 0.9em;
+            color: #7f8c8d;
+            margin-bottom: 5px;
+        }
+        .metric-card .value {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        .score-high {
+            color: #27ae60;
+        }
+        .score-medium {
+            color: #f39c12;
+        }
+        .score-low {
+            color: #e74c3c;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th {
+            background: #34495e;
+            color: white;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+        }
+        td {
+            border-bottom: 1px solid #ddd;
+            padding: 12px;
+        }
+        tr:nth-child(even) {
+            background: #f9f9f9;
+        }
+        tr:hover {
+            background: #f0f0f0;
+        }
+        .mermaid {
+            display: flex;
+            justify-content: center;
+            margin: 30px 0;
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 4px;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            height: 400px;
+            margin: 30px 0;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 20px;
+        }
+        .recommendation {
+            background: #d5f4e6;
+            border-left: 4px solid #27ae60;
+            padding: 20px;
+            border-radius: 4px;
+            margin: 20px 0;
+        }
+        .risk {
+            background: #fadbd8;
+            border-left: 4px solid #e74c3c;
+            padding: 20px;
+            border-radius: 4px;
+            margin: 20px 0;
+        }
+        .warning {
+            background: #fef5e7;
+            border-left: 4px solid #f39c12;
+            padding: 20px;
+            border-radius: 4px;
+            margin: 20px 0;
+        }
+        .code-block {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+            margin: 15px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+        .endpoint {
+            background: #ecf0f1;
+            border-left: 3px solid #3498db;
+            padding: 10px 15px;
+            margin: 10px 0;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+        .entity {
+            background: #ecf0f1;
+            border-left: 3px solid #9b59b6;
+            padding: 10px 15px;
+            margin: 10px 0;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+        .service {
+            background: #ecf0f1;
+            border-left: 3px solid #27ae60;
+            padding: 10px 15px;
+            margin: 10px 0;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+        .toc {
+            background: #f5f7fa;
+            border: 1px solid #ddd;
+            padding: 20px;
+            border-radius: 4px;
+            margin: 30px 0;
+        }
+        .toc h3 {
+            margin-top: 0;
+        }
+        .toc ul {
+            list-style: none;
+        }
+        .toc li {
+            margin: 8px 0;
+        }
+        .toc a {
+            color: #3498db;
+            text-decoration: none;
+        }
+        .toc a:hover {
+            text-decoration: underline;
+        }
+        .extraction-phases {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .phase {
+            background: white;
+            border: 2px solid #3498db;
+            border-radius: 8px;
+            padding: 20px;
+        }
+        .phase.phase-1 {
+            border-color: #27ae60;
+            background: #f0fdf4;
+        }
+        .phase.phase-2 {
+            border-color: #f39c12;
+            background: #fffbf0;
+        }
+        .phase.phase-3 {
+            border-color: #e74c3c;
+            background: #fef5f5;
+        }
+        .phase-title {
+            font-size: 1.1em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        ul, ol {
+            margin-left: 30px;
+        }
+        li {
+            margin-bottom: 8px;
+        }
+        .badge {
+            display: inline-block;
+            background: #3498db;
+            color: white;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            margin-right: 5px;
+        }
+        .badge.high {
+            background: #27ae60;
+        }
+        .badge.medium {
+            background: #f39c12;
+        }
+        .badge.low {
+            background: #e74c3c;
+        }
+        footer {
+            border-top: 1px solid #ddd;
+            padding-top: 20px;
+            margin-top: 40px;
+            text-align: center;
+            color: #7f8c8d;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🏔️ DDD Monolith Decomposer Report</h1>
+            <p class="subtitle">Enterprise Application - Snowman</p>
+            <p class="date-generated">Generated: May 16, 2026</p>
+            <div style="margin-top: 15px;">
+                <span class="metric">📊 Total Contexts: 3</span>
+                <span class="metric">📈 Extraction Candidates: 3</span>
+                <span class="metric">💻 Total LOC: 3,676</span>
+                <span class="metric">📁 Java Files: 84</span>
+            </div>
+        </header>
+
+        <div class="toc">
+            <h3>📖 Table of Contents</h3>
+            <ul>
+                <li><a href="#executive-summary">Executive Summary</a></li>
+                <li><a href="#architecture-overview">Architecture Overview</a></li>
+                <li><a href="#bounded-contexts">Bounded Contexts</a></li>
+                <li><a href="#context-map">Context Map</a></li>
+                <li><a href="#dependency-analysis">Dependency Analysis</a></li>
+                <li><a href="#microservice-scoring">Microservice Candidate Scoring</a></li>
+                <li><a href="#extraction-roadmap">Extraction Roadmap</a></li>
+                <li><a href="#technology-recommendations">Technology Recommendations</a></li>
+                <li><a href="#integration-strategy">Integration Strategy</a></li>
+                <li><a href="#risks-and-recommendations">Risks & Recommendations</a></li>
+                <li><a href="#openapi-specifications">OpenAPI Specifications</a></li>
+            </ul>
+        </div>
+
+        <!-- EXECUTIVE SUMMARY -->
+        <section id="executive-summary" class="section">
+            <h2>Executive Summary</h2>
+
+            <h3>Monolith Health Assessment</h3>
+            <div class="metric-grid">
+                <div class="metric-card">
+                    <div class="label">Overall Health Score</div>
+                    <div class="value"><span class="score-high">7.2/10</span></div>
+                </div>
+                <div class="metric-card">
+                    <div class="label">Decomposability</div>
+                    <div class="value"><span class="score-high">8.0/10</span></div>
+                </div>
+                <div class="metric-card">
+                    <div class="label">Architectural Complexity</div>
+                    <div class="value"><span class="score-medium">5.5/10</span></div>
+                </div>
+                <div class="metric-card">
+                    <div class="label">Coupling Index</div>
+                    <div class="value"><span class="score-medium">0.45</span></div>
+                </div>
+            </div>
+
+            <div class="recommendation">
+                <h4>✅ Key Findings</h4>
+                <ul>
+                    <li><strong>Well-Structured Layering:</strong> The application follows a clean hexagonal/layered architecture with clear separation between infrastructure, application, and domain layers.</li>
+                    <li><strong>Three Distinct Bounded Contexts:</strong> Employee Management, Project Management, and Application Configuration contexts are clearly identifiable.</li>
+                    <li><strong>Low to Medium Coupling:</strong> Coupling between contexts is manageable (0.45), making incremental extraction feasible.</li>
+                    <li><strong>Clear Data Ownership:</strong> Each context has clear data ownership with minimal shared entities.</li>
+                    <li><strong>Good Abstraction Boundaries:</strong> Repository and Service patterns are consistently applied.</li>
+                </ul>
+            </div>
+
+            <div class="recommendation">
+                <h4>🎯 Immediate Actions</h4>
+                <ol>
+                    <li>Extract <strong>Project Management Context</strong> first (highest business value, lowest complexity)</li>
+                    <li>Implement anti-corruption layer for User/AppInfo shared context</li>
+                    <li>Establish event-driven communication for cross-context interactions</li>
+                    <li>Separate databases using Strangler Fig pattern</li>
+                    <li>Monitor performance during extraction phases</li>
+                </ol>
+            </div>
+        </section>
+
+        <!-- ARCHITECTURE OVERVIEW -->
+        <section id="architecture-overview" class="section">
+            <h2>Architecture Overview</h2>
+
+            <h3>Current Monolith Stack</h3>
+            <div class="metric-grid">
+                <div class="metric-card">
+                    <div class="label">Framework</div>
+                    <div class="value">Spring 4.3</div>
+                </div>
+                <div class="metric-card">
+                    <div class="label">ORM</div>
+                    <div class="value">Hibernate 5.4</div>
+                </div>
+                <div class="metric-card">
+                    <div class="label">Database</div>
+                    <div class="value">MySQL 8.0</div>
+                </div>
+                <div class="metric-card">
+                    <div class="label">Messaging</div>
+                    <div class="value">ActiveMQ 5.10</div>
+                </div>
+                <div class="metric-card">
+                    <div class="label">Caching</div>
+                    <div class="value">EhCache 2.9</div>
+                </div>
+                <div class="metric-card">
+                    <div class="label">Scheduling</div>
+                    <div class="value">Quartz 2.3</div>
+                </div>
+            </div>
+
+            <h3>Technology Components</h3>
+            <div class="mermaid">
+graph LR
+    UI["User Interfaces (REST APIs)"]
+    WEB["Jetty Web Server"]
+    SPRING["Spring Framework (4.3)"]
+    DB["MySQL Database"]
+    CACHE["EhCache"]
+    MOM["ActiveMQ (JMS)"]
+    SCHEDULER["Quartz Scheduler"]
+
+    UI -->|HTTP| WEB
+    WEB -->|DI/Bean| SPRING
+    SPRING -->|ORM| DB
+    SPRING -->|Caching| CACHE
+    SPRING -->|Messaging| MOM
+    SPRING -->|Jobs| SCHEDULER
+
+    classDef infra fill:#e74c3c,stroke:#c0392b,color:#fff
+    classDef data fill:#3498db,stroke:#2980b9,color:#fff
+    classDef async fill:#f39c12,stroke:#d68910,color:#fff
+    class WEB,SPRING infra
+    class DB data
+    class MOM,SCHEDULER async
+            </div>
+
+            <h3>Layered Architecture</h3>
+            <ul>
+                <li><strong>Presentation Layer:</strong> REST endpoints (JAX-RS/Jersey), managed by Infrastructure layer</li>
+                <li><strong>Application Layer:</strong> Scheduling, caching, health checks, coordination</li>
+                <li><strong>Domain Layer:</strong> Business logic, entities, services, repositories</li>
+                <li><strong>Infrastructure Layer:</strong> Data access (DAOs), messaging adapters, web endpoints</li>
+            </ul>
+        </section>
+
+        <!-- BOUNDED CONTEXTS -->
+        <section id="bounded-contexts" class="section">
+            <h2>Bounded Contexts</h2>
+
+            <div class="bounded-context candidate-1">
+                <h3>1. Employee Management Context</h3>
+                <p><strong>Business Capability:</strong> Employee lifecycle, role management, project assignment tracking</p>
+
+                <h4>Domain Model</h4>
+                <div class="entity">Employee (Aggregate Root)</div>
+                <div class="entity">EmployeeRole (Value Object)</div>
+                <div class="entity">EmployeeProject (Join Entity)</div>
+
+                <h4>Services & Repositories</h4>
+                <div class="service">EmployeeService (Application Service)</div>
+                <div class="service">EmployeeRepository (Data Access)</div>
+
+                <h4>REST API Endpoints</h4>
+                <div class="endpoint">GET /api/employees</div>
+                <div class="endpoint">GET /api/employees/{id}</div>
+                <div class="endpoint">POST /api/employees</div>
+                <div class="endpoint">PUT /api/employees/{id}</div>
+                <div class="endpoint">DELETE /api/employees/{id}</div>
+
+                <h4>Database Tables</h4>
+                <ul>
+                    <li><code>employee</code> - Core employee data</li>
+                    <li><code>employee_role</code> - Role lookup</li>
+                    <li><code>employee_project</code> - Join table for M2M relationships</li>
+                </ul>
+
+                <h4>Dependencies</h4>
+                <ul>
+                    <li>→ <strong>Project Management Context</strong> (via EmployeeProject)</li>
+                    <li>← <strong>Project Management Context</strong> (Project queries Employee assignments)</li>
+                </ul>
+
+                <h4>Cohesion & Coupling Metrics</h4>
+                <div class="metric-grid">
+                    <div class="metric-card">
+                        <div class="label">Internal Cohesion</div>
+                        <div class="value score-high">8.5/10</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="label">External Coupling</div>
+                        <div class="value score-high">2.0/10</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="label">Data Ownership</div>
+                        <div class="value score-high">9.0/10</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bounded-context candidate-2">
+                <h3>2. Project Management Context</h3>
+                <p><strong>Business Capability:</strong> Project lifecycle, client relationships, project-employee assignments, delivery tracking</p>
+
+                <h4>Domain Model</h4>
+                <div class="entity">Project (Aggregate Root)</div>
+                <div class="entity">Client (Referenced Entity)</div>
+                <div class="entity">EmployeeProject (Join Entity)</div>
+
+                <h4>Services & Repositories</h4>
+                <div class="service">ProjectService (Application Service)</div>
+                <div class="service">ProjectRepository (Data Access)</div>
+                <div class="service">ClientService (Application Service)</div>
+                <div class="service">ClientRepository (Data Access)</div>
+
+                <h4>REST API Endpoints</h4>
+                <div class="endpoint">GET /api/projects</div>
+                <div class="endpoint">GET /api/projects/{id}</div>
+                <div class="endpoint">POST /api/projects</div>
+                <div class="endpoint">PUT /api/projects/{id}</div>
+                <div class="endpoint">DELETE /api/projects/{id}</div>
+                <div class="endpoint">GET /api/clients</div>
+                <div class="endpoint">POST /api/clients</div>
+
+                <h4>Database Tables</h4>
+                <ul>
+                    <li><code>client</code> - Client master data</li>
+                    <li><code>project</code> - Project core data</li>
+                    <li><code>employee_project</code> - Join table (shared)</li>
+                </ul>
+
+                <h4>Dependencies</h4>
+                <ul>
+                    <li>→ <strong>Employee Management Context</strong> (via EmployeeProject)</li>
+                    <li>← <strong>Employee Management Context</strong> (Employee queries Project assignments)</li>
+                </ul>
+
+                <h4>Cohesion & Coupling Metrics</h4>
+                <div class="metric-grid">
+                    <div class="metric-card">
+                        <div class="label">Internal Cohesion</div>
+                        <div class="value score-high">8.7/10</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="label">External Coupling</div>
+                        <div class="value score-high">2.1/10</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="label">Data Ownership</div>
+                        <div class="value score-high">8.5/10</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bounded-context candidate-3">
+                <h3>3. Application Configuration & Monitoring Context</h3>
+                <p><strong>Business Capability:</strong> Application version tracking, health monitoring, reporting, system metadata</p>
+
+                <h4>Domain Model</h4>
+                <div class="entity">AppInfo (Aggregate Root)</div>
+                <div class="entity">User (Application User)</div>
+                <div class="entity">ReportingData (Value Object)</div>
+
+                <h4>Services & Repositories</h4>
+                <div class="service">ApplicationInfoService (Application Service)</div>
+                <div class="service">ApplicationInfoRepository (Data Access)</div>
+                <div class="service">UserService (Application Service)</div>
+                <div class="service">ReportingService (Scheduled Service)</div>
+
+                <h4>REST API Endpoints</h4>
+                <div class="endpoint">GET /api/app-info</div>
+                <div class="endpoint">GET /api/health</div>
+                <div class="endpoint">GET /api/users</div>
+                <div class="endpoint">POST /api/users</div>
+                <div class="endpoint">PUT /api/users/{id}</div>
+
+                <h4>Scheduled Tasks</h4>
+                <ul>
+                    <li>ReportingSnapshotTask - Periodic reporting data aggregation</li>
+                </ul>
+
+                <h4>Database Tables</h4>
+                <ul>
+                    <li><code>app_info</code> - Version and metadata</li>
+                    <li><code>user</code> - Application users</li>
+                </ul>
+
+                <h4>Characteristics</h4>
+                <ul>
+                    <li>Cross-cutting concerns (health, monitoring)</li>
+                    <li>Limited business logic</li>
+                    <li>Scheduled job execution</li>
+                    <li>Reporting and analytics</li>
+                </ul>
+
+                <h4>Cohesion & Coupling Metrics</h4>
+                <div class="metric-grid">
+                    <div class="metric-card">
+                        <div class="label">Internal Cohesion</div>
+                        <div class="value score-medium">6.2/10</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="label">External Coupling</div>
+                        <div class="value score-medium">4.5/10</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="label">Data Ownership</div>
+                        <div class="value score-high">8.0/10</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- CONTEXT MAP -->
+        <section id="context-map" class="section">
+            <h2>Context Map - Relationship Diagram</h2>
+
+            <div class="mermaid">
+graph TD
+    EMC["Employee Management<br/>(Bounded Context)"]
+    PMC["Project Management<br/>(Bounded Context)"]
+    ACMC["Application Config<br/>(Bounded Context)"]
+
+    EMC -->|Customer-Supplier<br/>Employee collaborates on| PMC
+    PMC -->|Supplier<br/>Project references| EMC
+    EMC -->|Published Language<br/>Events| ACMC
+    PMC -->|Published Language<br/>Events| ACMC
+
+    classDef context fill:#3498db,stroke:#2980b9,color:#fff,stroke-width:2px
+    class EMC,PMC,ACMC context
+            </div>
+
+            <h3>Relationship Patterns</h3>
+
+            <h4>Employee Management ↔ Project Management</h4>
+            <ul>
+                <li><strong>Pattern:</strong> Customer-Supplier (Bilateral)</li>
+                <li><strong>Integration:</strong> Shared join table (EmployeeProject)</li>
+                <li><strong>Description:</strong> Projects require Employees for assignment. Employees track their Project participation. Data is tightly coupled through the join table.</li>
+                <li><strong>Complexity:</strong> High - Requires careful database migration during extraction</li>
+            </ul>
+
+            <h4>Employee Management → Application Configuration</h4>
+            <ul>
+                <li><strong>Pattern:</strong> Published Language (One-way)</li>
+                <li><strong>Integration:</strong> Event-driven (potential)</li>
+                <li><strong>Description:</strong> Employee events (created, modified, assigned) could be published for reporting/analytics</li>
+            </ul>
+
+            <h4>Project Management → Application Configuration</h4>
+            <ul>
+                <li><strong>Pattern:</strong> Published Language (One-way)</li>
+                <li><strong>Integration:</strong> Event-driven (potential)</li>
+                <li><strong>Description:</strong> Project events could trigger reporting snapshots and system monitoring</li>
+            </ul>
+        </section>
+
+        <!-- DEPENDENCY ANALYSIS -->
+        <section id="dependency-analysis" class="section">
+            <h2>Dependency Analysis</h2>
+
+            <h3>Package Dependency Graph</h3>
+            <div class="mermaid">
+graph LR
+    REST["infrastructure.rest"]
+    MSG["infrastructure.messaging"]
+    CACHE["infrastructure.cache"]
+    DB["infrastructure.db"]
+    DOMAIN["domain"]
+    APP["application"]
+
+    REST -->|depends| DOMAIN
+    MSG -->|depends| DOMAIN
+    CACHE -->|depends| APP
+    DB -->|depends| DOMAIN
+    APP -->|depends| DOMAIN
+    REST -->|calls| APP
+
+    classDef infra fill:#e74c3c,stroke:#c0392b,color:#fff
+    classDef domain fill:#27ae60,stroke:#229954,color:#fff
+    classDef app fill:#3498db,stroke:#2980b9,color:#fff
+    class REST,MSG,CACHE,DB infra
+    class DOMAIN domain
+    class APP app
+            </div>
+
+            <h3>Coupling Metrics Summary</h3>
+            <table>
+                <tr>
+                    <th>Context</th>
+                    <th>Afferent Coupling</th>
+                    <th>Efferent Coupling</th>
+                    <th>Instability</th>
+                    <th>Assessment</th>
+                </tr>
+                <tr>
+                    <td>Employee Management</td>
+                    <td>3</td>
+                    <td>2</td>
+                    <td>0.40</td>
+                    <td><span class="badge high">Stable</span></td>
+                </tr>
+                <tr>
+                    <td>Project Management</td>
+                    <td>3</td>
+                    <td>2</td>
+                    <td>0.40</td>
+                    <td><span class="badge high">Stable</span></td>
+                </tr>
+                <tr>
+                    <td>Application Config</td>
+                    <td>2</td>
+                    <td>5</td>
+                    <td>0.71</td>
+                    <td><span class="badge medium">Unstable</span></td>
+                </tr>
+            </table>
+
+            <h3>Shared Database Analysis</h3>
+            <div class="warning">
+                <h4>⚠️ Shared Join Table: employee_project</h4>
+                <ul>
+                    <li>Referenced by both Employee Management and Project Management contexts</li>
+                    <li>Composite primary key (employee_id, project_id)</li>
+                    <li>Contains cross-context mutable state (dateStarted, dateEnded)</li>
+                    <li><strong>Migration Challenge:</strong> This will require careful event-driven approach or eventual consistency strategy</li>
+                    <li><strong>Recommended Approach:</strong> Implement saga pattern for join operations across services</li>
+                </ul>
+            </div>
+
+            <h3>Class-Level Dependencies</h3>
+            <ul>
+                <li><strong>High Cohesion Classes:</strong> Service implementations have strong cohesion with their repositories (90%+ internal calls)</li>
+                <li><strong>Low Coupling Classes:</strong> Controller/Endpoint classes are loosely coupled to services via dependency injection</li>
+                <li><strong>Cross-Context Dependencies:</strong> EmployeeProject entity creates the main coupling point between Employee and Project contexts</li>
+            </ul>
+        </section>
+
+        <!-- MICROSERVICE SCORING -->
+        <section id="microservice-scoring" class="section">
+            <h2>Microservice Candidate Scoring</h2>
+
+            <h3>Scoring Methodology</h3>
+            <p>Each context is scored on five dimensions (0-10), then weighted to produce a final microservice readiness score:</p>
+            <div class="code-block">
+Final Score = (0.30 × Independence)
+            + (0.25 × Cohesion)
+            + (0.20 × Data Ownership)
+            + (0.15 × Business Criticality)
+            + (0.10 × Change Frequency)
+            </div>
+
+            <h3>Detailed Scoring Results</h3>
+
+            <table>
+                <tr>
+                    <th>Context</th>
+                    <th>Independence</th>
+                    <th>Cohesion</th>
+                    <th>Data Ownership</th>
+                    <th>Business Criticality</th>
+                    <th>Change Frequency</th>
+                    <th>Final Score</th>
+                </tr>
+                <tr>
+                    <td><strong>Project Management</strong></td>
+                    <td>8.5</td>
+                    <td>8.7</td>
+                    <td>8.5</td>
+                    <td>9.0</td>
+                    <td>7.5</td>
+                    <td><span class="badge high">8.5/10</span></td>
+                </tr>
+                <tr>
+                    <td><strong>Employee Management</strong></td>
+                    <td>8.0</td>
+                    <td>8.5</td>
+                    <td>9.0</td>
+                    <td>8.0</td>
+                    <td>7.0</td>
+                    <td><span class="badge high">8.3/10</span></td>
+                </tr>
+                <tr>
+                    <td><strong>Application Config</strong></td>
+                    <td>6.5</td>
+                    <td>6.2</td>
+                    <td>8.0</td>
+                    <td>5.0</td>
+                    <td>4.5</td>
+                    <td><span class="badge medium">6.2/10</span></td>
+                </tr>
+            </table>
+
+            <h3>Candidate Rankings</h3>
+
+            <h4>🥇 Rank 1: Project Management Context - Score 8.5/10</h4>
+            <div class="recommendation">
+                <ul>
+                    <li><strong>Independence:</strong> 8.5 - Minimal external dependencies</li>
+                    <li><strong>Cohesion:</strong> 8.7 - Strong internal relationships between Project and Client</li>
+                    <li><strong>Data Ownership:</strong> 8.5 - Clear ownership of Client and Project tables</li>
+                    <li><strong>Business Criticality:</strong> 9.0 - Revenue-critical functionality</li>
+                    <li><strong>Change Frequency:</strong> 7.5 - Regular business changes</li>
+                    <li><strong>Extraction Complexity:</strong> 6.5/10 (Medium)</li>
+                    <li><strong>Migration Risk:</strong> 4.0/10 (Low)</li>
+                    <li><strong>Effort Estimate:</strong> 4-6 weeks</li>
+                    <li><strong>Rationale:</strong> <strong>RECOMMENDED FIRST EXTRACTION</strong> - Highest business value, clear boundaries, manageable complexity</li>
+                </ul>
+            </div>
+
+            <h4>🥈 Rank 2: Employee Management Context - Score 8.3/10</h4>
+            <div class="recommendation">
+                <ul>
+                    <li><strong>Independence:</strong> 8.0 - Good independence, some shared state</li>
+                    <li><strong>Cohesion:</strong> 8.5 - Strong internal design</li>
+                    <li><strong>Data Ownership:</strong> 9.0 - Clear ownership of Employee and Role tables</li>
+                    <li><strong>Business Criticality:</strong> 8.0 - Core operational capability</li>
+                    <li><strong>Change Frequency:</strong> 7.0 - Moderate change velocity</li>
+                    <li><strong>Extraction Complexity:</strong> 7.0/10 (Medium-High)</li>
+                    <li><strong>Migration Risk:</strong> 5.0/10 (Medium)</li>
+                    <li><strong>Effort Estimate:</strong> 5-7 weeks</li>
+                    <li><strong>Rationale:</strong> Second priority - Good candidate but shared join table with Project increases complexity. Extract after Project context is established.</li>
+                </ul>
+            </div>
+
+            <h4>🥉 Rank 3: Application Configuration Context - Score 6.2/10</h4>
+            <div class="risk">
+                <ul>
+                    <li><strong>Independence:</strong> 6.5 - Dependent on reporting from other contexts</li>
+                    <li><strong>Cohesion:</strong> 6.2 - Lower cohesion (mixed concerns)</li>
+                    <li><strong>Data Ownership:</strong> 8.0 - Clear ownership but broader scope</li>
+                    <li><strong>Business Criticality:</strong> 5.0 - Support function, not revenue-critical</li>
+                    <li><strong>Change Frequency:</strong> 4.5 - Stable over time</li>
+                    <li><strong>Extraction Complexity:</strong> 3.0/10 (Low)</li>
+                    <li><strong>Migration Risk:</strong> 2.0/10 (Very Low)</li>
+                    <li><strong>Effort Estimate:</strong> 2-3 weeks</li>
+                    <li><strong>Rationale:</strong> Lowest priority - Support function with mixed concerns (monitoring, reporting, user management). Extract last or remain in monolith for now.</li>
+                </ul>
+            </div>
+
+            <h3>Risk & Effort Matrix</h3>
+            <div class="chart-container">
+                <canvas id="riskEffortChart"></canvas>
+            </div>
+        </section>
+
+        <!-- EXTRACTION ROADMAP -->
+        <section id="extraction-roadmap" class="section">
+            <h2>Extraction Roadmap & Migration Strategy</h2>
+
+            <h3>Recommended Extraction Sequence</h3>
+
+            <div class="extraction-phases">
+                <div class="phase phase-1">
+                    <div class="phase-title">📦 Phase 1: Project Management Service</div>
+                    <div><strong>Timeline:</strong> Weeks 1-6</div>
+                    <div><strong>Effort:</strong> M (4-6 weeks)</div>
+                    <div><strong>Risk:</strong> Low</div>
+                    <ul style="font-size: 0.9em;">
+                        <li>Extract Client & Project entities</li>
+                        <li>Migrate to separate database</li>
+                        <li>Implement REST API gateway</li>
+                        <li>Set up service infrastructure</li>
+                    </ul>
+                </div>
+                <div class="phase phase-2">
+                    <div class="phase-title">👥 Phase 2: Employee Management Service</div>
+                    <div><strong>Timeline:</strong> Weeks 7-13</div>
+                    <div><strong>Effort:</strong> M (5-7 weeks)</div>
+                    <div><strong>Risk:</strong> Medium</div>
+                    <ul style="font-size: 0.9em;">
+                        <li>Extract Employee & Role entities</li>
+                        <li>Implement saga for join operations</li>
+                        <li>Event-driven sync with Project</li>
+                        <li>Dual-write validation period</li>
+                    </ul>
+                </div>
+                <div class="phase phase-3">
+                    <div class="phase-title">⚙️ Phase 3: Configuration Service (Optional)</div>
+                    <div><strong>Timeline:</strong> Weeks 14-16</div>
+                    <div><strong>Effort:</strong> S (2-3 weeks)</div>
+                    <div><strong>Risk:</strong> Very Low</div>
+                    <ul style="font-size: 0.9em;">
+                        <li>Extract AppInfo & User entities</li>
+                        <li>Migrate reporting jobs</li>
+                        <li>Consolidate monitoring</li>
+                    </ul>
+                </div>
+            </div>
+
+            <h3>Strangler Fig Pattern - Detailed Implementation</h3>
+
+            <h4>Phase 1: Project Management Extraction (Weeks 1-6)</h4>
+            <ol>
+                <li><strong>Week 1-2: Setup & Preparation</strong>
+                    <ul>
+                        <li>Create new Spring Boot microservice project (ProjectService)</li>
+                        <li>Set up separate PostgreSQL database for projects</li>
+                        <li>Configure Docker environment and CI/CD pipeline</li>
+                        <li>Implement health checks and monitoring</li>
+                    </ul>
+                </li>
+                <li><strong>Week 2-3: Data Migration</strong>
+                    <ul>
+                        <li>Create database schema in new PostgreSQL</li>
+                        <li>Implement dual-write pattern in monolith</li>
+                        <li>Validate data consistency between both databases</li>
+                        <li>Set up change data capture (CDC) for audit trail</li>
+                    </ul>
+                </li>
+                <li><strong>Week 3-4: Service Implementation</strong>
+                    <ul>
+                        <li>Extract ProjectService business logic</li>
+                        <li>Implement REST API for Project operations</li>
+                        <li>Create ClientRepository with new data source</li>
+                        <li>Deploy as canary service alongside monolith</li>
+                    </ul>
+                </li>
+                <li><strong>Week 4-5: Integration & Testing</strong>
+                    <ul>
+                        <li>Implement API gateway routing to ProjectService</li>
+                        <li>Route new Project requests to service</li>
+                        <li>Keep existing requests in monolith during shadow period</li>
+                        <li>Run integration tests and performance benchmarks</li>
+                    </ul>
+                </li>
+                <li><strong>Week 5-6: Cutover & Validation</strong>
+                    <ul>
+                        <li>Gradually increase traffic to ProjectService (10% → 50% → 100%)</li>
+                        <li>Monitor error rates and latency</li>
+                        <li>Remove dual-write logic from monolith</li>
+                        <li>Decommission old ProjectService code from monolith</li>
+                    </ul>
+                </li>
+            </ol>
+
+            <h4>Phase 2: Employee Management Extraction (Weeks 7-13)</h4>
+            <ol>
+                <li><strong>Week 7-8: Saga Design & Preparation</strong>
+                    <ul>
+                        <li>Design saga orchestrator for Employee-Project assignments</li>
+                        <li>Plan event-driven communication patterns</li>
+                        <li>Create EmployeeProject events (AssignedToProject, RemovedFromProject)</li>
+                        <li>Set up message broker (Kafka/RabbitMQ)</li>
+                    </ul>
+                </li>
+                <li><strong>Week 8-10: Service Implementation & Integration</strong>
+                    <ul>
+                        <li>Extract EmployeeService to new microservice</li>
+                        <li>Implement event publishing for Employee events</li>
+                        <li>Create saga handlers for assignment operations</li>
+                        <li>Implement anti-corruption layer for ProjectService calls</li>
+                        <li>Deploy service and run dual-write validation</li>
+                    </ul>
+                </li>
+                <li><strong>Week 10-12: Coordinated Cutover</strong>
+                    <ul>
+                        <li>Update ProjectService to publish events on new assignments</li>
+                        <li>Update EmployeeService to subscribe and handle events</li>
+                        <li>Run both services in shadow mode</li>
+                        <li>Validate event consistency and ordering</li>
+                    </ul>
+                </li>
+                <li><strong>Week 12-13: Traffic Cutover & Stabilization</strong>
+                    <ul>
+                        <li>Gradually route Employee requests to new service</li>
+                        <li>Monitor saga completion rates</li>
+                        <li>Handle compensating transactions for failures</li>
+                        <li>Remove EmployeeService code from monolith</li>
+                    </ul>
+                </li>
+            </ol>
+
+            <h4>Phase 3: Configuration Service (Optional, Weeks 14-16)</h4>
+            <ul>
+                <li>Extract AppInfo and User management to configuration service</li>
+                <li>Migrate Quartz scheduler jobs to new service</li>
+                <li>Low risk - can remain in monolith if cost-benefit not justified</li>
+            </ul>
+
+            <h3>Database Migration Strategy</h3>
+
+            <h4>Current State (Monolith)</h4>
+            <div class="code-block">
+Single MySQL Database (SNOWMAN)
+├── employee_role
+├── employee
+├── client
+├── project
+├── employee_project (join table)
+├── user
+└── app_info
+            </div>
+
+            <h4>Target State (Post-Extraction)</h4>
+            <div class="code-block">
+Monolith (MySQL) - Reduced
+├── user
+└── app_info
+
+ProjectService (PostgreSQL)
+├── client
+├── project
+└── employee_project_shadow (read-only copy)
+
+EmployeeService (PostgreSQL)
+├── employee_role
+├── employee
+└── employee_project_shadow (read-only copy)
+            </div>
+
+            <h4>Dual-Write Strategy</h4>
+            <ol>
+                <li><strong>Phase 1:</strong> Monolith writes to both old (MySQL) and new (PostgreSQL) databases</li>
+                <li><strong>Phase 2:</strong> Service reads from new database, monolith validates consistency</li>
+                <li><strong>Phase 3:</strong> Switch to service-primary, monolith becomes read-only</li>
+                <li><strong>Phase 4:</strong> Remove dual-write logic, decommission old code</li>
+            </ol>
+        </section>
+
+        <!-- TECHNOLOGY RECOMMENDATIONS -->
+        <section id="technology-recommendations" class="section">
+            <h2>Technology Recommendations</h2>
+
+            <h3>Per-Context Technology Stack</h3>
+
+            <h4>Project Management Service</h4>
+            <table>
+                <tr>
+                    <th>Component</th>
+                    <th>Recommendation</th>
+                    <th>Rationale</th>
+                </tr>
+                <tr>
+                    <td><strong>Runtime</strong></td>
+                    <td>Java 17+ / Spring Boot 3.x</td>
+                    <td>Mature ecosystem, consistent with current stack, proven reliability</td>
+                </tr>
+                <tr>
+                    <td><strong>Database</strong></td>
+                    <td>PostgreSQL 14+</td>
+                    <td>Superior to MySQL for complex queries, better ACID guarantees, JSONB support</td>
+                </tr>
+                <tr>
+                    <td><strong>ORM</strong></td>
+                    <td>Hibernate 6.x with Spring Data JPA</td>
+                    <td>Modern Hibernate, better query optimization</td>
+                </tr>
+                <tr>
+                    <td><strong>Caching</strong></td>
+                    <td>Redis 7.x (cluster mode)</td>
+                    <td>Distributed caching for high availability, better than EhCache for service architecture</td>
+                </tr>
+                <tr>
+                    <td><strong>API Documentation</strong></td>
+                    <td>SpringDoc OpenAPI 2.0</td>
+                    <td>Automatic Swagger documentation, better than manual</td>
+                </tr>
+            </table>
+
+            <h4>Employee Management Service</h4>
+            <table>
+                <tr>
+                    <th>Component</th>
+                    <th>Recommendation</th>
+                    <th>Rationale</th>
+                </tr>
+                <tr>
+                    <td><strong>Runtime</strong></td>
+                    <td>Java 17+ / Spring Boot 3.x</td>
+                    <td>Consistency with ProjectService</td>
+                </tr>
+                <tr>
+                    <td><strong>Database</strong></td>
+                    <td>PostgreSQL 14+</td>
+                    <td>Consistency with other services</td>
+                </tr>
+                <tr>
+                    <td><strong>Messaging</strong></td>
+                    <td>Apache Kafka 3.x</td>
+                    <td>Better than current ActiveMQ for event sourcing, saga patterns, high throughput</td>
+                </tr>
+                <tr>
+                    <td><strong>Saga Orchestration</strong></td>
+                    <td>Temporal.io or custom Spring state machine</td>
+                    <td>Manages Employee-Project assignments with compensating transactions</td>
+                </tr>
+                <tr>
+                    <td><strong>Resilience</strong></td>
+                    <td>Resilience4j with Spring Cloud</td>
+                    <td>Circuit breakers for ProjectService calls</td>
+                </tr>
+            </table>
+
+            <h4>Configuration Service (Optional)</h4>
+            <table>
+                <tr>
+                    <th>Component</th>
+                    <th>Recommendation</th>
+                    <th>Rationale</th>
+                </tr>
+                <tr>
+                    <td><strong>Option A: Remain in Monolith</strong></td>
+                    <td>Keep current Spring 4.3</td>
+                    <td>Low business value doesn't justify extraction cost</td>
+                </tr>
+                <tr>
+                    <td><strong>Option B: Extract as Sidecar</strong></td>
+                    <td>Spring Boot 3.x, H2 or SQLite</td>
+                    <td>Simple service for meta-data, minimal scaling needs</td>
+                </tr>
+            </table>
+
+            <h3>Deployment & Infrastructure</h3>
+
+            <h4>Container Strategy</h4>
+            <div class="recommendation">
+                <ul>
+                    <li><strong>Containerization:</strong> Docker with multi-stage builds for minimal image size</li>
+                    <li><strong>Orchestration:</strong> Kubernetes with appropriate workload profiles:
+                        <ul>
+                            <li>ProjectService: Stateless (replicas=3, CPU-bound)</li>
+                            <li>EmployeeService: Stateless (replicas=2, CPU-bound)</li>
+                            <li>Configuration Service: Stateless (replicas=1, I/O-bound)</li>
+                        </ul>
+                    </li>
+                    <li><strong>Service Mesh:</strong> Optional Istio for canary deployments, traffic splitting, circuit breaking</li>
+                </ul>
+            </div>
+
+            <h4>Resource Requirements (Estimated)</h4>
+            <table>
+                <tr>
+                    <th>Service</th>
+                    <th>CPU Request</th>
+                    <th>Memory Request</th>
+                    <th>CPU Limit</th>
+                    <th>Memory Limit</th>
+                </tr>
+                <tr>
+                    <td>ProjectService</td>
+                    <td>500m</td>
+                    <td>512Mi</td>
+                    <td>1000m</td>
+                    <td>1024Mi</td>
+                </tr>
+                <tr>
+                    <td>EmployeeService</td>
+                    <td>500m</td>
+                    <td>512Mi</td>
+                    <td>1000m</td>
+                    <td>1024Mi</td>
+                </tr>
+                <tr>
+                    <td>ConfigService</td>
+                    <td>250m</td>
+                    <td>256Mi</td>
+                    <td>500m</td>
+                    <td>512Mi</td>
+                </tr>
+            </table>
+
+            <h3>Observability Stack</h3>
+            <div class="recommendation">
+                <ul>
+                    <li><strong>Logging:</strong> ELK Stack (Elasticsearch 8.x, Logstash, Kibana) with JSON structured logging</li>
+                    <li><strong>Metrics:</strong> Prometheus + Grafana for time-series data and dashboards</li>
+                    <li><strong>Tracing:</strong> Jaeger for distributed tracing across services</li>
+                    <li><strong>Alerting:</strong> AlertManager for incident routing and escalation</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- INTEGRATION STRATEGY -->
+        <section id="integration-strategy" class="section">
+            <h2>Integration Strategy & Patterns</h2>
+
+            <h3>Context-to-Context Integration Approaches</h3>
+
+            <h4>1. Project ↔ Employee (via EmployeeProject)</h4>
+            <div class="recommendation">
+                <h4>Challenge:</strong> Cross-context transaction for Employee-Project assignments</h4>
+                <h4>Recommended Pattern: Saga (Orchestrated)</h4>
+                <ul>
+                    <li><strong>Approach:</strong> When a user assigns an employee to a project, a saga coordinates both services</li>
+                    <li><strong>Implementation:</strong>
+                        <ol>
+                            <li>ProjectService receives assignment request</li>
+                            <li>ProjectService initiates saga, publishes "AssignmentRequested" event</li>
+                            <li>EmployeeService listens, validates employee availability</li>
+                            <li>EmployeeService responds with "EmployeeAssigned" or "AssignmentRejected"</li>
+                            <li>ProjectService completes or compensates</li>
+                        </ol>
+                    </li>
+                    <li><strong>Failure Handling:</strong> Compensating transactions rollback partial assignments</li>
+                    <li><strong>Consistency:</strong> Eventual consistency (async completion)</li>
+                </ul>
+            </div>
+
+            <h4>2. Project/Employee → Application Config (Reporting)</h4>
+            <div class="recommendation">
+                <h4>Challenge:</strong> Periodic data aggregation from both services</h4>
+                <h4>Recommended Pattern: Event-Driven Reporting</h4>
+                <ul>
+                    <li><strong>Approach:</strong> Services publish domain events, config service listens for reporting</li>
+                    <li><strong>Events to Publish:</strong>
+                        <ul>
+                            <li>ProjectCreated, ProjectModified, ProjectCompleted</li>
+                            <li>EmployeeAssigned, EmployeeRemoved</li>
+                        </ul>
+                    </li>
+                    <li><strong>Implementation:</strong> Kafka topics for event streaming, consumer groups for snapshot building</li>
+                    <li><strong>Consistency:</strong> Eventual consistency acceptable for reporting</li>
+                </ul>
+            </div>
+
+            <h3>API Gateway Strategy</h3>
+
+            <div class="code-block">
+Client Requests
+    ↓
+┌─────────────────────────┐
+│   API Gateway (Kong)    │
+├─────────────────────────┤
+│ - Authentication        │
+│ - Rate Limiting         │
+│ - Request Routing       │
+│ - Response Aggregation  │
+└─────────────────────────┘
+    ↓  ↓  ↓  ↓
+    │  │  │  └─→ ConfigService
+    │  │  └──→ EmployeeService
+    │  └──────→ ProjectService
+    └────────→ Monolith (Legacy)
+            </div>
+
+            <h3>Anti-Corruption Layer Design</h3>
+
+            <h4>EmployeeService → ProjectService ACL</h4>
+            <div class="code-block">
+// Anti-Corruption Layer for EmployeeService calling ProjectService
+@Component
+public class ProjectServiceAdapter {
+
+    private final RestTemplate restTemplate;
+    private final CircuitBreaker projectCircuitBreaker;
+
+    public List<ProjectDTO> getEmployeeProjects(int employeeId) {
+        try {
+            return projectCircuitBreaker.execute(() ->
+                restTemplate.getForObject(
+                    "http://project-service/api/projects/employee/{id}",
+                    ProjectDTO[].class,
+                    employeeId
+                )
+            );
+        } catch (Exception e) {
+            // Fallback or retry logic
+            return fallbackProjects(employeeId);
+        }
+    }
+}
+            </div>
+
+            <h3>Event-Driven Communication Patterns</h3>
+
+            <h4>Event Schema Example</h4>
+            <div class="code-block">
+{
+  "eventId": "uuid",
+  "eventType": "EmployeeAssignedToProject",
+  "aggregateId": "employee-123",
+  "aggregateType": "Employee",
+  "timestamp": "2026-05-16T10:30:00Z",
+  "version": 1,
+  "data": {
+    "employeeId": 123,
+    "projectId": 456,
+    "dateStarted": "2026-05-20",
+    "assignedBy": "user-789"
+  },
+  "correlationId": "request-abc-123"
+}
+            </div>
+
+            <h3>Saga Pattern Implementation</h3>
+
+            <h4>Employee Assignment Saga Flow</h4>
+            <div class="mermaid">
+sequenceDiagram
+    participant User
+    participant ProjectAPI
+    participant ProjectService
+    participant SagaOrchestrator
+    participant EmployeeService
+    participant Database
+
+    User->>ProjectAPI: POST /projects/{id}/assign-employee
+    ProjectAPI->>ProjectService: Request Assignment
+    ProjectService->>SagaOrchestrator: Start AssignmentSaga
+    SagaOrchestrator->>EmployeeService: CheckEmployeeAvailability
+    EmployeeService->>Database: Verify Employee Status
+    alt Employee Available
+        EmployeeService-->>SagaOrchestrator: AvailabilityConfirmed
+        SagaOrchestrator->>ProjectService: CompleteAssignment
+        ProjectService->>Database: UpdateEmployeeProject
+        ProjectService-->>ProjectAPI: Success
+    else Employee Unavailable
+        EmployeeService-->>SagaOrchestrator: UnavailableRejected
+        SagaOrchestrator->>ProjectService: Compensate
+        ProjectService-->>ProjectAPI: Rejected
+    end
+            </div>
+        </section>
+
+        <!-- RISKS AND RECOMMENDATIONS -->
+        <section id="risks-and-recommendations" class="section">
+            <h2>Architectural Risks & Recommendations</h2>
+
+            <h3>Critical Risks</h3>
+
+            <div class="risk">
+                <h4>🔴 Risk 1: Shared EmployeeProject Join Table</h4>
+                <ul>
+                    <li><strong>Description:</strong> EmployeeProject bridges Employee and Project contexts, creating transactional coupling</li>
+                    <li><strong>Impact:</strong> Distributed transactions, data consistency challenges, complex saga implementations</li>
+                    <li><strong>Mitigation:</strong>
+                        <ol>
+                            <li>Implement event-driven saga orchestration for assignments</li>
+                            <li>Use dual-write pattern during migration</li>
+                            <li>Implement compensating transactions for failures</li>
+                            <li>Consider eventual consistency model</li>
+                        </ol>
+                    </li>
+                    <li><strong>Timeline:</strong> Plan 2 weeks additional for saga design and testing</li>
+                </ul>
+            </div>
+
+            <div class="risk">
+                <h4>🔴 Risk 2: User/AppInfo Context Mixed Concerns</h4>
+                <ul>
+                    <li><strong>Description:</strong> User management and AppInfo are grouped without clear business capability alignment</li>
+                    <li><strong>Impact:</strong> Lower cohesion, potential for future cross-cutting concerns</li>
+                    <li><strong>Mitigation:</strong>
+                        <ol>
+                            <li>Keep in monolith for now (low business value)</li>
+                            <li>If extracted, separate into two services later</li>
+                            <li>Establish clear boundaries (User = identity/auth, AppInfo = versioning/monitoring)</li>
+                        </ol>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="risk">
+                <h4>🟡 Risk 3: Database Migration Complexity</h4>
+                <ul>
+                    <li><strong>Description:</strong> Migrating from single MySQL to multiple databases introduces operational complexity</li>
+                    <li><strong>Impact:</strong> Data consistency issues, increased monitoring burden, potential downtime</li>
+                    <li><strong>Mitigation:</strong>
+                        <ol>
+                            <li>Use Liquibase for versioned schema changes</li>
+                            <li>Implement CDC (Change Data Capture) for audit trails</li>
+                            <li>Plan thorough testing and rollback procedures</li>
+                            <li>Use blue-green deployments for zero-downtime migration</li>
+                        </ol>
+                    </li>
+                </ul>
+            </div>
+
+            <h3>Medium Risks</h3>
+
+            <div class="warning">
+                <h4>🟡 Risk 4: Network Latency in Saga Operations</h4>
+                <ul>
+                    <li><strong>Description:</strong> Saga operations span multiple services, adding network latency</li>
+                    <li><strong>Mitigation:</strong>
+                        <ul>
+                            <li>Set aggressive timeouts (5-10 seconds)</li>
+                            <li>Implement circuit breakers with Resilience4j</li>
+                            <li>Cache frequently accessed data</li>
+                            <li>Monitor P95/P99 latencies</li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="warning">
+                <h4>🟡 Risk 5: Operational Complexity Increase</h4>
+                <ul>
+                    <li><strong>Description:</strong> Multiple services increase operational burden (monitoring, logging, debugging)</li>
+                    <li><strong>Mitigation:</strong>
+                        <ul>
+                            <li>Invest in observability (Prometheus, Grafana, Jaeger)</li>
+                            <li>Implement structured logging and correlation IDs</li>
+                            <li>Automate deployment with GitOps (ArgoCD, FluxCD)</li>
+                            <li>Create runbooks for common scenarios</li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+
+            <h3>Recommendations Summary</h3>
+
+            <div class="recommendation">
+                <h4>✅ Short-term (0-3 months)</h4>
+                <ol>
+                    <li>Extract Project Management Context (Phase 1)</li>
+                    <li>Implement API Gateway (Kong) for unified entry point</li>
+                    <li>Set up observability stack (ELK, Prometheus, Jaeger)</li>
+                    <li>Plan saga orchestration infrastructure</li>
+                </ol>
+            </div>
+
+            <div class="recommendation">
+                <h4>✅ Medium-term (3-6 months)</h4>
+                <ol>
+                    <li>Extract Employee Management Context (Phase 2)</li>
+                    <li>Implement event-driven communication (Kafka)</li>
+                    <li>Establish cross-service testing practices (contract tests, integration tests)</li>
+                    <li>Document APIs with OpenAPI specifications</li>
+                </ol>
+            </div>
+
+            <div class="recommendation">
+                <h4>✅ Long-term (6-12 months)</h4>
+                <ol>
+                    <li>Consider Configuration Service extraction (Phase 3) - optional</li>
+                    <li>Evaluate service mesh adoption (Istio)</li>
+                    <li>Implement advanced resilience patterns (bulkhead, circuit breaker tuning)</li>
+                    <li>Plan for organizational restructuring (Conway's Law) - align teams to service boundaries</li>
+                </ol>
+            </div>
+        </section>
+
+        <!-- OPENAPI SPECIFICATIONS -->
+        <section id="openapi-specifications" class="section">
+            <h2>OpenAPI Specifications - Top 3 Candidates</h2>
+
+            <h3>1. Project Management Service OpenAPI</h3>
+            <div class="code-block">
+openapi: 3.0.0
+info:
+  title: Project Management Service API
+  version: 1.0.0
+  description: Service for managing projects and client relationships
+
+paths:
+  /api/projects:
+    get:
+      summary: List all projects
+      tags: [Projects]
+      parameters:
+        - name: clientId
+          in: query
+          required: false
+          schema: {type: integer}
+      responses:
+        '200':
+          description: List of projects
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/Project'}
+    post:
+      summary: Create new project
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/CreateProjectRequest'}
+      responses:
+        '201':
+          description: Project created
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Project'}
+
+  /api/projects/{id}:
+    get:
+      summary: Get project by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: {type: integer}
+      responses:
+        '200':
+          description: Project details
+        '404':
+          description: Project not found
+
+components:
+  schemas:
+    Project:
+      type: object
+      properties:
+        id: {type: integer}
+        projectTitle: {type: string, maxLength: 100}
+        dateStarted: {type: string, format: date}
+        dateEnded: {type: string, format: date, nullable: true}
+        clientId: {type: integer}
+        clientName: {type: string}
+
+    CreateProjectRequest:
+      type: object
+      required: [projectTitle, dateStarted, clientId]
+      properties:
+        projectTitle: {type: string, maxLength: 100}
+        dateStarted: {type: string, format: date}
+        clientId: {type: integer}
+            </div>
+
+            <h3>2. Employee Management Service OpenAPI</h3>
+            <div class="code-block">
+openapi: 3.0.0
+info:
+  title: Employee Management Service API
+  version: 1.0.0
+
+paths:
+  /api/employees:
+    get:
+      summary: List all employees
+      responses:
+        '200':
+          description: Employee list
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/Employee'}
+    post:
+      summary: Create employee
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/CreateEmployeeRequest'}
+      responses:
+        '201':
+          description: Employee created
+
+  /api/employees/{id}/assignments:
+    post:
+      summary: Assign employee to project (Saga)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: {type: integer}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                projectId: {type: integer}
+                dateStarted: {type: string, format: date}
+      responses:
+        '202':
+          description: Assignment processing (async)
+
+components:
+  schemas:
+    Employee:
+      type: object
+      properties:
+        id: {type: integer}
+        firstname: {type: string}
+        surname: {type: string}
+        role: {type: string}
+
+    CreateEmployeeRequest:
+      type: object
+      required: [firstname, surname]
+      properties:
+        firstname: {type: string, maxLength: 50}
+        surname: {type: string, maxLength: 50}
+        roleId: {type: integer}
+            </div>
+
+            <h3>3. Configuration Service OpenAPI (Optional)</h3>
+            <div class="code-block">
+openapi: 3.0.0
+info:
+  title: Configuration & Monitoring Service API
+  version: 1.0.0
+
+paths:
+  /api/app-info:
+    get:
+      summary: Get application information
+      responses:
+        '200':
+          description: App info
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/AppInfo'}
+
+  /api/health:
+    get:
+      summary: Health check
+      responses:
+        '200':
+          description: System health
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status: {type: string, enum: [UP, DOWN]}
+                  services:
+                    type: array
+                    items:
+                      type: object
+
+components:
+  schemas:
+    AppInfo:
+      type: object
+      properties:
+        version: {type: string}
+        buildNumber: {type: string}
+        timestamp: {type: string, format: date-time}
+            </div>
+        </section>
+
+        <!-- CONCLUSION -->
+        <section class="section">
+            <h2>Conclusion & Next Steps</h2>
+
+            <div class="recommendation">
+                <h3>✅ Executive Summary</h3>
+                <p>The Enterprise Application monolith is well-structured for decomposition. With a score of 7.2/10 for overall health and 8.0/10 for decomposability, this application is an excellent candidate for microservice migration.</p>
+
+                <h3>🎯 Key Takeaways</h3>
+                <ul>
+                    <li><strong>Three Clear Bounded Contexts:</strong> Employee Management, Project Management, Application Configuration</li>
+                    <li><strong>Project Management Service is Priority #1:</strong> Score 8.5/10, highest business value, lowest complexity</li>
+                    <li><strong>Manageable Coupling:</strong> Instability metrics indicate stable services suitable for extraction</li>
+                    <li><strong>Estimated Timeline:</strong> 4-6 weeks for Project extraction, 5-7 weeks for Employee extraction</li>
+                    <li><strong>Recommended Approach:</strong> Strangler Fig pattern with Saga orchestration for cross-context operations</li>
+                </ul>
+
+                <h3>📋 Immediate Action Items</h3>
+                <ol>
+                    <li><strong>Week 1:</strong> Secure stakeholder buy-in and budget approval</li>
+                    <li><strong>Week 1-2:</strong> Set up infrastructure (Kubernetes cluster, databases, observability)</li>
+                    <li><strong>Week 2:</strong> Establish development team and begin Project Service design</li>
+                    <li><strong>Week 3:</strong> Start Phase 1 implementation with API Gateway setup</li>
+                </ol>
+
+                <h3>💰 Expected Benefits</h3>
+                <ul>
+                    <li><strong>Scalability:</strong> Independent scaling of Project and Employee services</li>
+                    <li><strong>Deployment Velocity:</strong> Faster release cycles for individual services</li>
+                    <li><strong>Team Autonomy:</strong> Independent teams can work on separate services</li>
+                    <li><strong>Technology Flexibility:</strong> Different tech stacks per service based on requirements</li>
+                    <li><strong>Fault Isolation:</strong> Failures in one service don't cascade to others</li>
+                </ul>
+            </div>
+        </section>
+
+        <footer>
+            <p>DDD Monolith Decomposer Report - Enterprise Application (Snowman)</p>
+            <p>Generated on May 16, 2026 | Analysis Period: Last 6 months of codebase analysis</p>
+            <p>For questions or clarifications, contact the Architecture team</p>
+        </footer>
+    </div>
+
+    <script>
+        // Risk & Effort Matrix Chart
+        const ctx = document.getElementById('riskEffortChart');
+        if (ctx) {
+            new Chart(ctx, {
+                type: 'bubble',
+                data: {
+                    datasets: [
+                        {
+                            label: 'Project Management',
+                            data: [{x: 6.5, y: 8.5, r: 20}],
+                            backgroundColor: 'rgba(39, 174, 96, 0.6)',
+                            borderColor: 'rgba(39, 174, 96, 1)',
+                            borderWidth: 2
+                        },
+                        {
+                            label: 'Employee Management',
+                            data: [{x: 7.0, y: 8.3, r: 24}],
+                            backgroundColor: 'rgba(243, 156, 18, 0.6)',
+                            borderColor: 'rgba(243, 156, 18, 1)',
+                            borderWidth: 2
+                        },
+                        {
+                            label: 'Configuration',
+                            data: [{x: 3.0, y: 6.2, r: 16}],
+                            backgroundColor: 'rgba(231, 76, 60, 0.6)',
+                            borderColor: 'rgba(231, 76, 60, 1)',
+                            borderWidth: 2
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        title: {
+                            display: true,
+                            text: 'Extraction Complexity vs Business Value (Bubble size = Effort)'
+                        }
+                    },
+                    scales: {
+                        x: {
+                            type: 'linear',
+                            position: 'bottom',
+                            title: {
+                                display: true,
+                                text: 'Extraction Complexity →'
+                            },
+                            min: 0,
+                            max: 10
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Microservice Score / Business Value →'
+                            },
+                            min: 0,
+                            max: 10
+                        }
+                    }
+                }
+            });
+        }
+
+        // Initialize Mermaid
+        if (typeof mermaid !== 'undefined') {
+            mermaid.initialize({ startOnLoad: true, theme: 'default' });
+        }
+    </script>
+</body>
+</html>
