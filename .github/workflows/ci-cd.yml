@@ -4,7 +4,8 @@ on:
   push:
     branches:
       - develop
-      - release/**
+      - 'release/**'
+
   pull_request:
 
 jobs:
@@ -12,17 +13,17 @@ jobs:
     name: Build and Test
     uses: ./.github/workflows/build-test.yml
 
-    semgrep:
-      name: Semgrep SAST
-      needs: build-test
-      uses: ./.github/workflows/scan-semgrep.yml
+  semgrep:
+    name: Semgrep SAST
+    needs: build-test
+    uses: ./.github/workflows/scan-semgrep.yml
 
-      trivy:
-        name: Trivy scan
-        needs: build-test
-        uses: ./.github/workflows/scan-trivy.yml
+  trivy:
+    name: Trivy scan
+    needs: build-test
+    uses: ./.github/workflows/scan-trivy.yml
 
-      qodana:
-        name: Qodana code quality
-        needs: build-test
-        uses: ./.github/workflows/scan-qodana.yml
+  qodana:
+    name: Qodana code quality
+    needs: build-test
+    uses: ./.github/workflows/scan-qodana.yml
