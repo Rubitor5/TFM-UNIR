@@ -195,4 +195,4 @@ For production use, this microservice would need:
 
 ## Author
 
-Based on DDD Monolith Decomposer Report - Project Management Context extraction
+Based on DDD Monolith Decomposer Report - Project Management Microservice Context extraction
