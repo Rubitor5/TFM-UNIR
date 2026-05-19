@@ -44,7 +44,7 @@ jobs:
 
       - name: Build & run tests
         working-directory: ${{ inputs.working-dir }}
-        run: make init test build
+        run: cd .. && make init test build
 
       - name: Upload surefire reports
         if: always()
