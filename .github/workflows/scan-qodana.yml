@@ -27,10 +27,13 @@ jobs:
           cache: maven
 
       - name: Run Qodana
-        uses: jetbrains/qodana-action@v2024.3
+        uses: JetBrains/qodana-action@v2026.1
         with:
           project-dir: ${{ inputs.working_dir }}
-          linter: jetbrains/qodana-jvm-community:2024.3
           fail-threshold: 0
           upload-results: true
           use-caches: true
+          pr-mode: false
+        env:
+          QODANA_TOKEN: ${{ secrets.QODANA_TOKEN_1339069886 }}
+          QODANA_ENDPOINT: 'https://qodana.cloud'
