@@ -26,14 +26,23 @@ jobs:
           java-version: ${{ inputs.java_version }}
           cache: maven
 
+      - name: Resolve Maven dependencies
+        run: |
+          mvn -B -ntp dependency:go-offline \
+            -f ${{ inputs.working_dir }}/pom.xml
+
+
       - name: Run Qodana
         uses: JetBrains/qodana-action@v2026.1
         with:
           project-dir: ${{ inputs.working_dir }}
+          linter: jetbrains/qodana-jvm-community:2026.1
           fail-threshold: 0
           upload-results: true
           use-caches: true
           pr-mode: false
+
         env:
           QODANA_TOKEN: ${{ secrets.QODANA_TOKEN_1339069886 }}
           QODANA_ENDPOINT: 'https://qodana.cloud'
+          QODANA_RAM: 4096
