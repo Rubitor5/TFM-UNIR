@@ -1,6 +1,6 @@
-MAVEN	:= mvn
-MVN_FLAGS	:= -B -ntp
-POM_FILE	:= project-microservice/pom.xml
+MAVEN      := mvn
+MVN_FLAGS  := -B -ntp
+POM_FILE   := project-microservice/pom.xml
 
 .PHONY: clean init test build
 
