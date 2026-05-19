@@ -30,7 +30,7 @@ jobs:
         uses: jetbrains/qodana-action@v2024.3
         with:
           project-dir: ${{ inputs.working_dir }}
-          linter: jetbrains/qodana-jvm-community:latest
+          linter: jetbrains/qodana-jvm-community:2024.3
           fail-threshold: 0
           upload-results: true
           use-caches: true
