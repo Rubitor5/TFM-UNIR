@@ -11,7 +11,7 @@ on:
       java_version:
         type: string
         required: false
-        default: '11'
+        default: '17'
 
 jobs:
   sonarqube:
