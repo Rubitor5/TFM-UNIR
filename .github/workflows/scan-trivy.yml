@@ -1,0 +1,27 @@
+name: Trivy scan
+
+on:
+  workflow_call:
+    scan-ref:
+      description: Path to scan
+      type: string
+      default: project-microservice
+    severity:
+      description: Comma-separated severity levels that fail the build
+      type: string
+      default: CRITICAL,HIGH
+
+jobs:
+  trivy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: aquasecurity/trivy-action@0.28.0
+        with:
+          scan-type: fs
+          scan-ref: ${{ inputs.scan-ref }}
+          severity: ${{ inputs.severity }}
+          exit-code: '1'
+          ignore-unfixed: true
+          format: table

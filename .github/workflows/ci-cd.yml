@@ -1,0 +1,28 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - develop
+      - release/**
+  pull_request:
+
+jobs:
+  build-test:
+    name: Build and Test
+    uses: ./.github/workflows/build-test.yml
+
+    semgrep:
+      name: Semgrep SAST
+      needs: build-test
+      uses: ./.github/workflows/scan-semgrep.yml
+
+      trivy:
+        name: Trivy scan
+        needs: build-test
+        uses: ./.github/workflows/scan-trivy.yml
+
+      qodana:
+        name: Qodana code quality
+        needs: build-test
+        uses: ./.github/workflows/scan-qodana.yml
