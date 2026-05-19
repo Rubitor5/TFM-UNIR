@@ -15,4 +15,3 @@ test:
 
 build:
 	$(MAVEN) $(MVN_FLAGS) package -DskipTests -f $(POM_FILE)
-	$(MAVEN) $(MVN_FLAGS) jacoco:report -f $(POM_FILE)
