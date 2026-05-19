@@ -23,8 +23,8 @@ jobs:
     needs: build-test
     uses: ./.github/workflows/scan-trivy.yml
 
-  qodana:
-    name: Qodana code quality
+  sonarqube:
+    name: SonarQube code quality
     needs: build-test
-    uses: ./.github/workflows/scan-qodana.yml
+    uses: ./.github/workflows/scan-sonarqube.yml
     secrets: inherit

@@ -14,4 +14,4 @@ test:
 	$(MAVEN) $(MVN_FLAGS) verify -f $(POM_FILE)
 
 build:
-	$(MAVEN) $(MVN_FLAGS) package -DskipTests -f $(POM_FILE)
+	$(MAVEN) $(MVN_FLAGS) clean verify -f $(POM_FILE)

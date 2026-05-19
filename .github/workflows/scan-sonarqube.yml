@@ -1,0 +1,41 @@
+name: SonarQube code quality
+
+on:
+  workflow_call:
+    inputs:
+      working_dir:
+        type: string
+        required: false
+        default: project-microservice
+
+      java_version:
+        type: string
+        required: false
+        default: '11'
+
+jobs:
+  sonarqube:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ inputs.java_version }}
+          cache: maven
+
+      - name: Analyze with SonarQube
+        uses: SonarSource/sonarqube-scan-action@7295e71c9583053f5bf40e9d4068a0c974603ec8
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          args: >
+            -Dsonar.projectKey=${{ vars.SONAR_PROJECT_KEY }}
+            -Dsonar.sources=${{ inputs.working_dir }}/src/main
+            -Dsonar.tests=${{ inputs.working_dir }}/src/test
+            -Dsonar.coverage.jacoco.xmlReportPaths=${{ inputs.working_dir }}/target/site/jacoco/jacoco.xml
+            -Dsonar.projectBaseDir=${{ inputs.working_dir }}
