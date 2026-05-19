@@ -27,3 +27,4 @@ jobs:
     name: Qodana code quality
     needs: build-test
     uses: ./.github/workflows/scan-qodana.yml
+    secrets: inherit
