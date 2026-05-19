@@ -29,9 +29,8 @@ jobs:
       - name: Run Qodana
         uses: jetbrains/qodana-action@v2024.3
         with:
-          args: >-
-            --project-dir=${{ inputs.working_dir }}
-            --linter=jetbrains/qodana-jvm-community:latest
-            --fail-threshold=0
+          project-dir: ${{ inputs.working_dir }}
+          linter: jetbrains/qodana-jvm-community:latest
+          fail-threshold: 0
           upload-results: true
           use-caches: true
