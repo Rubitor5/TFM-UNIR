@@ -42,7 +42,6 @@ jobs:
 
           args: >
             --project-dir=${{ inputs.working_dir }}
-            --linter=jetbrains/qodana-jvm-community:2026.1
             --fail-threshold=0
 
         env:
