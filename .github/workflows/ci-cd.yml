@@ -7,6 +7,21 @@ on:
       - 'release/**'
 
   pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - 'project-microservice/**'
+
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: "PR number to deploy (required for manual runs)"
+        required: true
+        type: string
+
+      image_tag:
+        description: "Image tag (optional override)"
+        required: false
+        type: string
 
 permissions:
   contents: read
