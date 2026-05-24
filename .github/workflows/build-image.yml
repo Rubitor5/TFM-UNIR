@@ -1,3 +1,13 @@
+name: Build & Push Image to ECR
+
+on:
+  workflow_call:
+    outputs:
+      image_tag:
+        description: "Docker image tag"
+        value: ${{ jobs.build-image.outputs.image_tag }}
+
+jobs:
   build-image:
     name: Build & Push Image to ECR
     runs-on: ubuntu-latest
