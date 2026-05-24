@@ -34,20 +34,23 @@ jobs:
     secrets: inherit
 
   build-image:
-    name: Build & Push Image to ECR
+    name: Build Image
     needs: build-test
     uses: ./.github/workflows/build-image.yml
     secrets: inherit
 
   deploy-preview:
-    name: Create Ephemeral Environment
+    name: Deploy Preview
     needs: build-image
     if: github.event_name == 'pull_request'
     uses: ./.github/workflows/deploy-preview.yml
     secrets: inherit
+    with:
+      pr_number: ${{ github.event.number }}
+      image_tag: ${{ needs.build-image.outputs.image_tag }}
 
   cleanup-preview:
-    name: Delete Ephemeral Environment
+    name: Cleanup Preview
     if: github.event_name == 'pull_request' && github.event.action == 'closed'
     uses: ./.github/workflows/cleanup-preview.yml
     secrets: inherit

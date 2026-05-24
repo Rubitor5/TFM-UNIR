@@ -12,7 +12,6 @@ on:
 
 jobs:
   deploy-preview:
-    name: Create Ephemeral Environment
     runs-on: ubuntu-latest
 
     steps:
@@ -22,7 +21,7 @@ jobs:
           repository: Rubitor5/TFM-UNIR
           token: ${{ secrets.GH_TOKEN }}
 
-      - name: Create preview env manifest
+      - name: Create manifest
         run: |
           PR=${{ inputs.pr_number }}
           IMAGE_TAG=${{ inputs.image_tag }}
@@ -45,5 +44,5 @@ jobs:
           git config user.email "github-actions@github.com"
 
           git add gitops/preview-envs/pr-${{ inputs.pr_number }}.yaml
-          git commit -m "preview env PR-${{ inputs.pr_number }}"
+          git commit -m "preview env PR-${{ inputs.pr_number }}" || exit 0
           git push
