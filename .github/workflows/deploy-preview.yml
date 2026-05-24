@@ -51,6 +51,4 @@ jobs:
 
           git commit -m "preview env PR-${PR}" || echo "No changes to commit"
 
-          git rebase origin/develop
-
           git push origin HEAD:develop
