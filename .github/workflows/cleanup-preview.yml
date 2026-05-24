@@ -3,6 +3,7 @@ name: Cleanup Preview
 on:
   pull_request:
     types: [closed]
+  workflow_call:
 
 jobs:
   cleanup-preview:
