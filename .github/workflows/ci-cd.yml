@@ -7,6 +7,25 @@ on:
       - 'release/**'
 
   pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - 'project-microservice/**'
+
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: "PR number to deploy (required for manual runs)"
+        required: true
+        type: string
+
+      image_tag:
+        description: "Image tag (optional override)"
+        required: false
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
 
 jobs:
   build-test:
@@ -23,7 +42,30 @@ jobs:
     needs: build-test
     uses: ./.github/workflows/scan-trivy.yml
 
-  qodana:
-    name: Qodana code quality
+  sonarqube:
+    name: SonarQube code quality
     needs: build-test
-    uses: ./.github/workflows/scan-qodana.yml
+    uses: ./.github/workflows/scan-sonarqube.yml
+    secrets: inherit
+
+  build-image:
+    name: Build Image
+    needs: build-test
+    uses: ./.github/workflows/build-image.yml
+    secrets: inherit
+
+  deploy-preview:
+    name: Deploy Preview
+    needs: build-image
+    if: github.event_name == 'pull_request'
+    uses: ./.github/workflows/deploy-preview.yml
+    secrets: inherit
+    with:
+      pr_number: ${{ github.event.number }}
+      image_tag: ${{ needs.build-image.outputs.image_tag }}
+
+  cleanup-preview:
+    name: Cleanup Preview
+    if: github.event_name == 'pull_request' && github.event.action == 'closed'
+    uses: ./.github/workflows/cleanup-preview.yml
+    secrets: inherit
