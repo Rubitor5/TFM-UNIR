@@ -1,0 +1,51 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+
+metadata:
+  name: preview-envs
+  namespace: argocd
+
+spec:
+  generators:
+    - git:
+        repoURL: https://github.com/Rubitor5/TFM-UNIR.git
+        revision: HEAD
+
+        files:
+          - path: gitops/preview-envs/*.yaml
+
+  template:
+    metadata:
+      name: '{{namespace}}'
+
+    spec:
+      project: default
+
+      source:
+        repoURL: https://github.com/Rubitor5/TFM-UNIR.git
+        targetRevision: HEAD
+        path: gitops/apps/microservice
+
+        helm:
+          values: |
+            namespace: {{namespace}}
+
+            image:
+              repository: {{image.repository}}
+              tag: {{image.tag}}
+
+            ingress:
+              enabled: true
+              host: {{host}}
+
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: '{{namespace}}'
+
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+
+        syncOptions:
+          - CreateNamespace=true

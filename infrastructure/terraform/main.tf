@@ -26,5 +26,15 @@ module "ecr" {
 module "argocd" {
   source = "./modules/argocd"
 
-  depends_on = [module.eks]
+  depends_on = [null_resource.cluster_ready, module.eks]
+}
+
+module "cluster_autoscaler" {
+  source = "./modules/cluster-autoscaler"
+
+  cluster_name      = var.cluster_name
+  aws_region        = var.aws_region
+  oidc_provider_arn = module.eks.oidc_provider_arn
+
+  depends_on = [null_resource.cluster_ready, module.eks]
 }
