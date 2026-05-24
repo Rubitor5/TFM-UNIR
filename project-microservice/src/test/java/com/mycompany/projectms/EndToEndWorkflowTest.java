@@ -198,6 +198,7 @@ class EndToEndWorkflowTest {
                 .content(objectMapper.writeValueAsString(client)))
             .andExpect(status().isNotFound());
 
+
         // Try to delete non-existent client
         mockMvc.perform(delete("/api/clients/99999"))
             .andExpect(status().isNotFound());
