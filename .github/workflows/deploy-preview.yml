@@ -1,0 +1,43 @@
+name: Deploy Preview
+
+on:
+  workflow_call:
+    needs: build-image
+
+jobs:
+  deploy-preview:
+    name: Create Ephemeral Environment
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout GitOps repo
+        uses: actions/checkout@v4
+        with:
+          repository: Rubitor5/TFM-UNIR
+          token: ${{ secrets.GH_TOKEN }}
+
+      - name: Create preview env manifest
+        run: |
+          PR=${{ github.event.number }}
+          IMAGE_TAG=${{ needs.build-image.outputs.image_tag }}
+
+          mkdir -p gitops/preview-envs
+
+          cat > gitops/preview-envs/pr-${PR}.yaml <<EOF
+          namespace: pr-${PR}
+
+          image:
+            repository: 100002492253.dkr.ecr.eu-north-1.amazonaws.com/project-microservice
+            tag: ${IMAGE_TAG}
+
+          host: pr-${PR}.example.com
+          EOF
+
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+
+          git add gitops/preview-envs/pr-${{ github.event.number }}.yaml
+          git commit -m "preview env PR-${{ github.event.number }}"
+          git push

@@ -11,20 +11,10 @@ on:
         description: Java version to use for build and test
         type: string
         default: '11'
-    outputs:
-      image-tag:
-        description: Branch slug + short SHA, used for image taggin
-        value: ${{ jobs.build.outputs.image-tag }}
-      branch-tag:
-        description: Branch slug, used for image tagging
-        value: ${{ jobs.build.outputs.branch-tag }}
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    outputs:
-      image-tag: ${{ steps.meta.outputs.image-tag }}
-      branch-tag: ${{ steps.meta.outputs.branch-tag }}
     steps:
       - uses: actions/checkout@v4
 
@@ -33,14 +23,6 @@ jobs:
           distribution: temurin
           java-version: ${{ inputs.java-version }}
           cache: maven
-
-      - id: meta
-        name: Compute image tags
-        run: |
-          BRANCH="${GITHUB_REF_NAME//\//-}"
-          SHA="${GITHUB_SHA::7}"
-          echo "image-tag=${BRANCH}-${SHA}" >> "$GITHUB_OUTPUT"
-          echo "branch-tag=${BRANCH}" >> "$GITHUB_OUTPUT"
 
       - name: Build & run tests
         working-directory: ${{ inputs.working-dir }}

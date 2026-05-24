@@ -1,0 +1,35 @@
+  build-image:
+    name: Build & Push Image to ECR
+    runs-on: ubuntu-latest
+
+    permissions:
+      id-token: write
+      contents: read
+
+    outputs:
+      image_tag: ${{ steps.meta.outputs.image_tag }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::100002492253:role/github-actions-role
+          aws-region: eu-north-1
+
+      - name: Login to ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Generate image tag
+        id: meta
+        run: |
+          echo "image_tag=pr-${{ github.event.number || github.sha }}" >> $GITHUB_OUTPUT
+
+      - name: Build Docker image
+        run: |
+          IMAGE=100002492253.dkr.ecr.eu-north-1.amazonaws.com/project-microservice:${{ steps.meta.outputs.image_tag }}
+
+          docker build -t $IMAGE .
+          docker push $IMAGE

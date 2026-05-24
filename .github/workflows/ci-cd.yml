@@ -28,3 +28,22 @@ jobs:
     needs: build-test
     uses: ./.github/workflows/scan-sonarqube.yml
     secrets: inherit
+
+  build-image:
+    name: Build & Push Image to ECR
+    needs: build-test
+    uses: ./.github/workflows/build-image.yml
+    secrets: inherit
+
+  deploy-preview:
+    name: Create Ephemeral Environment
+    needs: build-image
+    if: github.event_name == 'pull_request'
+    uses: ./.github/workflows/deploy-preview.yml
+    secrets: inherit
+
+  cleanup-preview:
+    name: Delete Ephemeral Environment
+    if: github.event_name == 'pull_request' && github.event.action == 'closed'
+    uses: ./.github/workflows/cleanup-preview.yml
+    secrets: inherit
