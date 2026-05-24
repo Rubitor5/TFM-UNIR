@@ -180,7 +180,6 @@ class EndToEndWorkflowTest {
         mockMvc.perform(delete("/api/projects/3000"))
             .andExpect(status().isNoContent());
 
-
         // Delete the client
         mockMvc.perform(delete("/api/clients/3000"))
             .andExpect(status().isNoContent());

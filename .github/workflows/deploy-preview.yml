@@ -47,6 +47,6 @@ jobs:
 
           git add gitops/preview-envs/pr-${PR}.yaml
 
-          git commit -m "preview env PR-${PR}" || exit 0
+          git commit -m "preview env PR-${PR}" || echo "No changes to commit"
 
-          git push origin HEAD:preview-pr-${PR}
+          git push origin HEAD:main
