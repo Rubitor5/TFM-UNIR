@@ -35,6 +35,7 @@ jobs:
           echo "image_tag=${GITHUB_SHA}" >> $GITHUB_OUTPUT
 
       - name: Build and push Docker image
+        working-directory: project-microservice
         run: |
           IMAGE=100002492253.dkr.ecr.eu-north-1.amazonaws.com/project-microservice:${{ steps.meta.outputs.image_tag }}
           docker build -t $IMAGE .
