@@ -69,3 +69,5 @@ jobs:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'
     uses: ./.github/workflows/cleanup-preview.yml
     secrets: inherit
+    with:
+      pr_number: ${{ github.event.number }}
