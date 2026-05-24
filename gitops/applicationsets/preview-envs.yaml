@@ -9,7 +9,7 @@ spec:
   generators:
     - git:
         repoURL: https://github.com/Rubitor5/TFM-UNIR.git
-        revision: HEAD
+        revision: develop
 
         files:
           - path: gitops/preview-envs/*.yaml
@@ -23,7 +23,7 @@ spec:
 
       source:
         repoURL: https://github.com/Rubitor5/TFM-UNIR.git
-        targetRevision: HEAD
+        targetRevision: develop
         path: gitops/apps/microservice
 
         helm:
