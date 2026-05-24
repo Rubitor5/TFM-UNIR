@@ -37,8 +37,9 @@ jobs:
 
           git checkout -B gitops-state origin/gitops-state
 
-          git add gitops/preview-envs/pr-${PR}.yaml
+          git rm -f gitops/preview-envs/pr-${PR}.yaml || true
 
           git commit -m "cleanup PR-${PR}" || echo "No changes to commit"
 
           git push origin HEAD:gitops-state
+
