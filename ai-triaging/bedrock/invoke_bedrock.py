@@ -4,7 +4,7 @@ import json
 
 from prompt_builder import build_prompt
 
-MODEL_ID = "anthropic.claude-sonnet-4-5-20250929-v1:0"
+MODEL_ID = "arn:aws:bedrock:eu-north-1:100002492253:inference-profile/eu.anthropic.claude-sonnet-4-5-20250929-v1:0"
 
 
 def invoke(prompt):
