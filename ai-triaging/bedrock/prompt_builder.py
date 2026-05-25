@@ -1,3 +1,5 @@
+import json
+
 def build_prompt(findings):
     return f"""
 You are a security triage engine.
