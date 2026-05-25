@@ -1,18 +1,18 @@
-import json
-
 def build_prompt(findings):
     return f"""
-You are an Application Security AI Triage Engine.
+You are a security triage engine.
 
-CRITICAL INSTRUCTIONS:
-- You MUST return ONLY valid JSON.
-- Do NOT include markdown.
-- Do NOT use ``` or ```json.
-- Do NOT include explanations, comments, or extra text.
-- Output MUST start with {{ and end with }}.
-- The output MUST be parsable by Python json.loads().
+CRITICAL RULES:
+- Output ONLY valid JSON
+- No extra text
+- No explanations
+- No markdown
+- No examples
+- No reasoning
 
-SCHEMA (must follow exactly):
+If you output anything else, it is invalid.
+
+Return format:
 
 {{
   "findings": [
@@ -27,6 +27,6 @@ SCHEMA (must follow exactly):
   ]
 }}
 
-INPUT FINDINGS:
+INPUT:
 {json.dumps(findings, indent=2)}
 """
