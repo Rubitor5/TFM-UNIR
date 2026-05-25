@@ -15,16 +15,44 @@ def extract_pr_number():
         if pr and "number" in pr:
             return pr["number"]
 
-    # fallback: workflow_dispatch or manual runs
     ref = os.environ.get("GITHUB_REF", "")
-
-    # refs/pull/123/merge → extract 123
     parts = ref.split("/")
+
     for p in parts:
         if p.isdigit():
             return int(p)
 
     raise ValueError(f"Cannot extract PR number from GITHUB_REF: {ref}")
+
+
+def safe(v, default="N/A"):
+    if v is None or v == "":
+        return default
+    return v
+
+
+def render_finding(f):
+    return f"""
+### {safe(f.get('title'), 'Untitled Finding')}
+
+- **ID:** {safe(f.get('finding_id'))}
+- **Decision:** {safe(f.get('triage_decision'))}
+- **Severity:** {safe(f.get('severity_adjusted'))}
+- **Confidence:** {safe(f.get('confidence'), 0)}
+- **Priority:** {safe(f.get('priority'))}
+- **Risk Score:** {safe(f.get('risk_score'))}
+- **Exploitability:** {safe(f.get('exploitability'))}
+- **Impact:** {safe(f.get('impact'))}
+
+**Reasoning:**
+{safe(f.get('reasoning'))}
+
+**Rationale:**
+{safe(f.get('rationale'))}
+
+**Recommended Action:**
+{safe(f.get('recommended_action'))}
+"""
 
 
 def main(path):
@@ -47,13 +75,26 @@ def main(path):
     if not findings:
         body += "No findings returned by AI.\n"
     else:
+        # group by severity
+        grouped = {"CRITICAL": [], "HIGH": [], "MEDIUM": [], "INFO": [], "LOW": [], "FALSE_POSITIVE": []}
+
         for f in findings:
-            body += f"## {f.get('triage_decision', 'UNKNOWN')}\n"
-            body += f"- Severity: {f.get('severity_adjusted', 'N/A')}\n"
-            body += f"- Confidence: {f.get('confidence', 0)}\n"
-            body += f"- Action: {f.get('recommended_action', '')}\n\n"
+            sev = (f.get("severity_adjusted") or "INFO").upper()
+            grouped.setdefault(sev, []).append(f)
+
+        for severity in ["CRITICAL", "HIGH", "MEDIUM", "LOW", "INFO", "FALSE_POSITIVE"]:
+            items = grouped.get(severity, [])
+            if not items:
+                continue
+
+            body += f"\n## 🚨 {severity} ({len(items)})\n"
+
+            for f in items:
+                body += render_finding(f)
+                body += "\n---\n"
 
     pr.create_issue_comment(body)
+
 
 if __name__ == "__main__":
     main(sys.argv[1])
