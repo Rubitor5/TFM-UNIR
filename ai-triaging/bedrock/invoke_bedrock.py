@@ -4,13 +4,14 @@ import json
 import re
 from prompt_builder import build_prompt
 
-MODEL_ID = "arn:aws:bedrock:eu-north-1:100002492253:inference-profile/eu.anthropic.claude-sonnet-4-5-20250929-v1:0"
+MODEL_ID = "eu.anthropic.claude-sonnet-4-5-20250929-v1:0"
 
 
 def clean_llm_output(text: str) -> str:
     text = re.sub(r"```json", "", text)
     text = text.replace("```", "")
     return text.strip()
+
 
 
 def invoke(prompt):
