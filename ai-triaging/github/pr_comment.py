@@ -1,32 +1,42 @@
 import json
 import os
-
 from github import Github
 
 
 def main(path):
     token = os.environ["GITHUB_TOKEN"]
-
     repo_name = os.environ["GITHUB_REPOSITORY"]
 
-    pr_number = os.environ["GITHUB_REF"].split("/")[-2]
+    with open(os.environ["GITHUB_EVENT_PATH"]) as f:
+        event = json.load(f)
+
+    pr_number = event["pull_request"]["number"]
 
     g = Github(token)
-
     repo = g.get_repo(repo_name)
-
     pr = repo.get_pull(int(pr_number))
 
+
     with open(path) as f:
-        data = json.load(f)
+        content = f.read().strip()
 
-    body = "# AI Security Triage Report\n\n"
+    if not content:
+        raise ValueError("AI results file is empty")
 
-    for finding in data.get("findings", []):
-        body += f"## {finding['triage_decision']}\n"
-        body += f"Severity: {finding['severity_adjusted']}\n"
-        body += f"Confidence: {finding['confidence']}\n"
-        body += f"Reasoning: {finding['reasoning']}\n\n"
+    data = json.loads(content)
+
+    findings = data.get("findings", [])
+
+    body = "# 🔐 AI Security Triage Report\n\n"
+
+    for finding in findings:
+        body += f"## {finding.get('triage_decision', 'UNKNOWN')}\n"
+        body += f"- Severity: {finding.get('severity_adjusted', 'N/A')}\n"
+        body += f"- Confidence: {finding.get('confidence', 0)}\n"
+        body += f"- Reasoning: {finding.get('reasoning', 'N/A')}\n\n"
+
+    if not findings:
+        body += "No findings returned by AI.\n"
 
     pr.create_issue_comment(body)
 
