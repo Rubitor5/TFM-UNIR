@@ -7,7 +7,6 @@ from github import Github
 def main(path):
     token = os.environ["GITHUB_TOKEN"]
 
-
     repo_name = os.environ["GITHUB_REPOSITORY"]
 
     pr_number = os.environ["GITHUB_REF"].split("/")[-2]
