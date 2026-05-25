@@ -25,31 +25,59 @@ def normalize(data: dict) -> dict:
 
     def add(section, severity):
         for item in data.get(section, []) or []:
+
             findings.append({
+                # identity
                 "finding_id": item.get("finding_id"),
+
+                # classification
                 "triage_decision": "TRUE_POSITIVE",
                 "severity_adjusted": severity,
+
+                # scoring (safe defaults)
                 "confidence": 0.9 if severity == "CRITICAL" else 0.75,
-                "reasoning": item.get("recommendation", ""),
-                "recommended_action": (
-                    item.get("recommended_action")
-                    or item.get("remediation")
+
+                # 🔥 enriched context (NEW)
+                "title": item.get("title", ""),
+                "priority": item.get("priority", ""),
+                "risk_score": item.get("risk_score", None),
+                "exploitability": item.get("exploitability", ""),
+                "impact": item.get("impact", ""),
+                "rationale": item.get("rationale", ""),
+
+                # reasoning (normalized)
+                "reasoning": (
+                    item.get("rationale")
                     or item.get("recommendation")
+                    or item.get("title")
                     or ""
+                ),
+
+                # action resolution chain (safe fallback)
+                "recommended_action": (
+                    item.get("remediation")
+                    or item.get("recommended_action")
+                    or item.get("recommendation")
+                    or "NO_ACTION_PROVIDED"
                 )
             })
 
     add("critical_findings", "CRITICAL")
     add("high_priority_findings", "HIGH")
 
+    # false positives
     for item in data.get("false_positive_candidates", []) or []:
         findings.append({
             "finding_id": item.get("finding_id"),
             "triage_decision": "FALSE_POSITIVE",
             "severity_adjusted": "LOW",
             "confidence": 0.3,
+
+            # keep context even for FP (important for audits)
             "reasoning": item.get("reason", ""),
-            "recommended_action": ""
+            "title": item.get("title", ""),
+
+            "recommended_action": "IGNORE"
         })
 
     return {"findings": findings}
