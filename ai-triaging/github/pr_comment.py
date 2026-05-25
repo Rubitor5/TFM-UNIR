@@ -55,6 +55,5 @@ def main(path):
 
     pr.create_issue_comment(body)
 
-
 if __name__ == "__main__":
     main(sys.argv[1])
