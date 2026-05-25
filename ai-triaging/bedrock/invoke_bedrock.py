@@ -1,10 +1,16 @@
 import argparse
 import boto3
 import json
-
+import re
 from prompt_builder import build_prompt
 
 MODEL_ID = "arn:aws:bedrock:eu-north-1:100002492253:inference-profile/eu.anthropic.claude-sonnet-4-5-20250929-v1:0"
+
+
+def clean_llm_output(text: str) -> str:
+    text = re.sub(r"```json", "", text)
+    text = text.replace("```", "")
+    return text.strip()
 
 
 def invoke(prompt):
@@ -24,17 +30,18 @@ def invoke(prompt):
         })
     )
 
-    body = json.loads(response["body"].read())
+    raw = response["body"].read().decode("utf-8")
+    data = json.loads(raw)
 
-    return body["content"][0]["text"]
+    text = data["content"][0]["text"]
+
+    return clean_llm_output(text)
 
 
 def main():
     parser = argparse.ArgumentParser()
-
     parser.add_argument("--input")
     parser.add_argument("--output")
-
     args = parser.parse_args()
 
     with open(args.input) as f:
@@ -44,8 +51,13 @@ def main():
 
     result = invoke(prompt)
 
+    try:
+        parsed = json.loads(result)
+    except json.JSONDecodeError as e:
+        raise ValueError(f"Model returned invalid JSON: {e}\nOutput:\n{result}")
+
     with open(args.output, "w") as f:
-        f.write(result)
+        json.dump(parsed, f, indent=2)
 
 
 if __name__ == "__main__":
