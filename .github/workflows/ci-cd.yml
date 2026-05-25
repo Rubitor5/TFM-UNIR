@@ -1,11 +1,6 @@
 name: CI/CD Pipeline
 
 on:
-  push:
-    branches:
-      - develop
-      - 'release/**'
-
   pull_request:
     types: [opened, synchronize, reopened]
     paths:
@@ -46,6 +41,16 @@ jobs:
     name: SonarQube code quality
     needs: build-test
     uses: ./.github/workflows/scan-sonarqube.yml
+    secrets: inherit
+
+    ai-security-triage:
+    name: AI Security Triage
+    needs:
+      - semgrep
+      - trivy
+      - sonarqube
+
+    uses: ./.github/workflows/ai-security-triage.yml
     secrets: inherit
 
   build-image:

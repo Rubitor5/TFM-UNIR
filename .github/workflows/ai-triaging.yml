@@ -1,0 +1,77 @@
+name: AI Security Triage
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+  pull-requests: write
+  id-token: write
+
+jobs:
+  ai-triage:
+    runs-on: ubuntu-latest
+
+    env:
+      AWS_REGION: eu-north-1
+      BEDROCK_MODEL_ID: anthropic.claude-sonnet-4-5-20250929-v1:0
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download Semgrep Results
+        uses: actions/download-artifact@v4
+        with:
+          name: semgrep-results
+          path: artifacts/
+
+      - name: Download Trivy Results
+        uses: actions/download-artifact@v4
+        with:
+          name: trivy-results
+          path: artifacts/
+
+      - name: Download Sonar Results
+        uses: actions/download-artifact@v4
+        with:
+          name: sonarqube-results
+          path: artifacts/
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::100002492253:role/github-actions-role
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Dependencies
+        run: |
+          pip install -r ../../requirements.txt
+
+      - name: Normalize Findings
+        run: |
+          python ai-triaging/normalizers/main.py \
+            --semgrep artifacts/semgrep-results.json \
+            --trivy artifacts/trivy-results.json \
+            --sonarqube artifacts/sonarqube-results.json \
+            --output normalized-findings.json
+
+      - name: Invoke Bedrock AI Triage
+        run: |
+          python ai-triaging/bedrock/invoke_bedrock.py \
+            --input normalized-findings.json \
+            --output ai-results.json
+
+      - name: Evaluate Verdict
+        run: |
+          python ai-triaging/policy/verdict_engine.py ai-results.json
+
+      - name: Post PR Comment
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          python ai-triaging/github/pr_comment.py ai-results.json
