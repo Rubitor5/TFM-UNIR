@@ -10,19 +10,24 @@ def main(path):
 
     findings = data.get("findings", [])
 
+    block = False
+
     for finding in findings:
         severity = (finding.get("severity_adjusted") or "").upper()
         confidence = float(finding.get("confidence", 0))
 
         if severity == "CRITICAL" and confidence >= FAIL_THRESHOLD:
-            print("Blocking pipeline")
-            sys.exit(1)
+            block = True
 
         if severity == "HIGH" and confidence >= FAIL_THRESHOLD:
-            print("Blocking pipeline")
-            sys.exit(1)
+            block = True
 
-    print("Pipeline approved")
+    print(json.dumps({
+        "block": block,
+        "findings_count": len(findings)
+    }))
+
+    sys.exit(0)
 
 
 if __name__ == "__main__":

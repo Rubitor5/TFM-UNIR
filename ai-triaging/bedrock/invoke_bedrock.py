@@ -31,7 +31,12 @@ def normalize(data: dict) -> dict:
                 "severity_adjusted": severity,
                 "confidence": 0.9 if severity == "CRITICAL" else 0.75,
                 "reasoning": item.get("recommendation", ""),
-                "recommended_action": item.get("remediation", "")
+                "recommended_action": (
+                    item.get("recommended_action")
+                    or item.get("remediation")
+                    or item.get("recommendation")
+                    or ""
+                )
             })
 
     add("critical_findings", "CRITICAL")
