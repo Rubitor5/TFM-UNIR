@@ -5,7 +5,7 @@ from github import Github
 
 
 def main(path):
-    token = os.environ["GITHUB_TOKEN"]
+    token = os.environ["GH_TOKEN"]
 
     repo_name = os.environ["GITHUB_REPOSITORY"]
 
