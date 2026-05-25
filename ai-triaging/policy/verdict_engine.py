@@ -11,10 +11,14 @@ def main(path):
     findings = data.get("findings", [])
 
     for finding in findings:
-        severity = finding.get("severity_adjusted")
-        confidence = finding.get("confidence", 0)
+        severity = (finding.get("severity_adjusted") or "").upper()
+        confidence = float(finding.get("confidence", 0))
 
-        if severity in ["CRITICAL", "HIGH"] and confidence >= FAIL_THRESHOLD:
+        if severity == "CRITICAL" and confidence >= FAIL_THRESHOLD:
+            print("Blocking pipeline")
+            sys.exit(1)
+
+        if severity == "HIGH" and confidence >= FAIL_THRESHOLD:
             print("Blocking pipeline")
             sys.exit(1)
 
