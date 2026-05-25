@@ -166,6 +166,10 @@ jobs:
       # =========================
       # PR COMMENT
       # =========================
+      - name: install PyGithub
+        run: |
+          pip install PyGithub
+          
       - name: Post PR Comment
         if: always()
         env:
