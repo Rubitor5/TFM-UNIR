@@ -47,7 +47,7 @@ jobs:
       - semgrep
       - trivy
       - sonarqube
-    uses: ./.github/workflows/ai-security-triage.yml
+    uses: ./.github/workflows/ai-triaging.yml
     secrets: inherit
 
   build-image:
