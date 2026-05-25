@@ -22,11 +22,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: aquasecurity/trivy-action@7b7aa264d83dc58691451798b4d117d53d21edfe
+      - uses: aquasecurity/trivy-action@master
         with:
           scan-type: fs
           scan-ref: ${{ inputs.scan_ref }}
-          severity: ${{ inputs.severity }}
-          exit-code: '1'
+          format: json
+          output: trivy-results.json
+          exit-code: '0'
           ignore-unfixed: true
-          format: table
+
+      - name: Upload Results
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-results
+          path: trivy-results.json

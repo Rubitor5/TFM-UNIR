@@ -33,6 +33,7 @@ public class AppInfoRestEndpointUTest {
     @InjectMocks
     private AppInfoRestEndpoint classUnderTest = new AppInfoRestEndpoint();
 
+
     @Test
     public void testGetApplicationInformation() throws BusinessException {
         PowerMockito.mockStatic(AppInfoResourceMapper.class);
