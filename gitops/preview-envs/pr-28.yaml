@@ -1,7 +1,0 @@
-namespace: pr-28
-
-image:
-  repository: 100002492253.dkr.ecr.eu-north-1.amazonaws.com/project-microservice
-  tag: 39995689e577ee99c1aa882a14f29c20db06565c
-
-host: pr-28.example.com
