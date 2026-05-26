@@ -47,40 +47,40 @@ jobs:
       - name: Wait for E2E Job Completion
         run: |
           NAMESPACE="pr-${{ inputs.pr_number }}"
-          
+
           echo "Waiting for ArgoCD to sync and create the E2E test job in namespace ${NAMESPACE}..."
-          
-          # Poll up to 10 minutes (60 * 10s) for Job creation
-          JOB_CREATED=false
+
+          # Poll up to 10 minutes for Job creation
           for i in {1..60}; do
             if kubectl -n ${NAMESPACE} get job project-microservice-e2e-test-job >/dev/null 2>&1; then
               echo "E2E Job detected!"
-              JOB_CREATED=true
               break
             fi
             sleep 10
           done
-          
-          if [ "$JOB_CREATED" = "false" ]; then
-            echo "Timeout waiting for ArgoCD to deploy the E2E Job."
-            exit 1
-          fi
-          
+
           echo "Monitoring E2E Job execution..."
-          # Poll up to 10 minutes (60 * 10s) for completion status
+
+          # Poll up to 10 minutes for completion
           for i in {1..60}; do
-            STATUS=$(kubectl -n ${NAMESPACE} get job project-microservice-e2e-test-job -o jsonpath='{.status.conditions[0].type}' 2>/dev/null)
-            if [ "$STATUS" = "Complete" ]; then
+
+            SUCCEEDED=$(kubectl -n ${NAMESPACE} get job project-microservice-e2e-test-job -o jsonpath='{.status.succeeded}' 2>/dev/null)
+            FAILED=$(kubectl -n ${NAMESPACE} get job project-microservice-e2e-test-job -o jsonpath='{.status.failed}' 2>/dev/null)
+
+            if [ "$SUCCEEDED" = "1" ]; then
               echo "E2E tests passed successfully!"
               exit 0
-            elif [ "$STATUS" = "Failed" ]; then
-              echo "E2E tests failed! Check pod logs:"
-              kubectl -n ${NAMESPACE} logs -l app=project-microservice-e2e --tail=100
+            fi
+
+            if [ "$FAILED" != "" ] && [ "$FAILED" != "0" ]; then
+              echo "E2E tests failed! Check logs:"
+              kubectl -n ${NAMESPACE} logs job/project-microservice-e2e-test-job --tail=100
               exit 1
             fi
-            echo "Job still running... (current status: $STATUS)"
+
+            echo "Job still running... (succeeded=$SUCCEEDED failed=$FAILED)"
             sleep 10
           done
-          
+
           echo "Timeout waiting for E2E Job to finish."
           exit 1
