@@ -1,0 +1,7 @@
+namespace: pr-19
+
+image:
+  repository: 100002492253.dkr.ecr.eu-north-1.amazonaws.com/project-microservice
+  tag: 6ba359dac8b2b91d6c6137d11f693477191ecb3b
+
+host: pr-19.example.com
