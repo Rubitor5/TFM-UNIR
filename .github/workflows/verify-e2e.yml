@@ -1,0 +1,86 @@
+name: Verify E2E Tests
+
+on:
+  workflow_call:
+    inputs:
+      pr_number:
+        description: "Pull Request number for the ephemeral namespace"
+        required: true
+        type: string
+      cluster_name:
+        description: "AWS EKS cluster name"
+        required: false
+        type: string
+        default: "tfm-unir-eks"
+      aws_region:
+        description: "AWS Region"
+        required: false
+        type: string
+        default: "eu-north-1"
+      aws_role:
+        description: "IAM Role to assume for AWS authentication"
+        required: false
+        type: string
+        default: "arn:aws:iam::100002492253:role/github-actions-role"
+
+jobs:
+  verify:
+    name: Poll & Verify E2E Job
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ inputs.aws_role }}
+          aws-region: ${{ inputs.aws_region }}
+
+      - name: Setup kubeconfig
+        run: |
+          aws eks update-kubeconfig --region ${{ inputs.aws_region }} --name ${{ inputs.cluster_name }}
+
+      - name: Wait for E2E Job Completion
+        run: |
+          NAMESPACE="pr-${{ inputs.pr_number }}"
+          
+          echo "Waiting for ArgoCD to sync and create the E2E test job in namespace ${NAMESPACE}..."
+          
+          # Poll up to 10 minutes (60 * 10s) for Job creation
+          JOB_CREATED=false
+          for i in {1..60}; do
+            if kubectl -n ${NAMESPACE} get job project-microservice-e2e-test-job >/dev/null 2>&1; then
+              echo "E2E Job detected!"
+              JOB_CREATED=true
+              break
+            fi
+            sleep 10
+          done
+          
+          if [ "$JOB_CREATED" = "false" ]; then
+            echo "Timeout waiting for ArgoCD to deploy the E2E Job."
+            exit 1
+          fi
+          
+          echo "Monitoring E2E Job execution..."
+          # Poll up to 10 minutes (60 * 10s) for completion status
+          for i in {1..60}; do
+            STATUS=$(kubectl -n ${NAMESPACE} get job project-microservice-e2e-test-job -o jsonpath='{.status.conditions[0].type}' 2>/dev/null)
+            if [ "$STATUS" = "Complete" ]; then
+              echo "E2E tests passed successfully!"
+              exit 0
+            elif [ "$STATUS" = "Failed" ]; then
+              echo "E2E tests failed! Check pod logs:"
+              kubectl -n ${NAMESPACE} logs -l app=project-microservice-e2e --tail=100
+              exit 1
+            fi
+            echo "Job still running... (current status: $STATUS)"
+            sleep 10
+          done
+          
+          echo "Timeout waiting for E2E Job to finish."
+          exit 1

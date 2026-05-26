@@ -1,0 +1,38 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: project-microservice-e2e-test-job
+  namespace: {{ .Values.namespace }}
+  annotations:
+    # Helm Hooks
+    "helm.sh/hook": test
+    "helm.sh/hook-delete-policy": before-hook-creation
+    # ArgoCD Hooks (triggers test on every preview env / main deploy Sync)
+    "argocd.argoproj.io/hook": PostSync
+    "argocd.argoproj.io/hook-delete-policy": BeforeHookCreation
+  labels:
+    app: project-microservice-e2e
+spec:
+  template:
+    metadata:
+      labels:
+        app: project-microservice-e2e
+    spec:
+      containers:
+        - name: e2e-test-runner
+          image: python:3.11-alpine
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: SERVICE_URL
+              value: "http://project-microservice:{{ .Values.service.port }}"
+          command: ["python", "/tests/e2e_test.py"]
+          volumeMounts:
+            - name: test-script-volume
+              mountPath: /tests
+      restartPolicy: Never
+      volumes:
+        - name: test-script-volume
+          configMap:
+            name: project-microservice-e2e-tests
+            defaultMode: 0755
+  backoffLimit: 2

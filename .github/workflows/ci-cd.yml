@@ -68,6 +68,24 @@ jobs:
       pr_number: ${{ github.event.number }}
       image_tag: ${{ needs.build-image.outputs.image_tag }}
 
+  e2e-verification:
+    name: E2E Verification
+    needs: deploy-preview
+    if: github.event_name == 'pull_request'
+    uses: ./.github/workflows/verify-e2e.yml
+    secrets: inherit
+    with:
+      pr_number: ${{ github.event.number }}
+
+  auto-cleanup:
+    name: Auto Cleanup on Success
+    needs: e2e-verification
+    if: github.event_name == 'pull_request' && success()
+    uses: ./.github/workflows/cleanup-preview.yml
+    secrets: inherit
+    with:
+      pr_number: ${{ github.event.number }}
+
   cleanup-preview:
     name: Cleanup Preview
     if: github.event_name == 'pull_request' && github.event.action == 'closed'
