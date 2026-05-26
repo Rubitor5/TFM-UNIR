@@ -1,7 +1,0 @@
-namespace: pr-20
-
-image:
-  repository: 100002492253.dkr.ecr.eu-north-1.amazonaws.com/project-microservice
-  tag: 8990ebd0d547f036f1f523898913848a4d14fc09
-
-host: pr-20.example.com
