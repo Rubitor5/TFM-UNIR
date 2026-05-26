@@ -27,6 +27,7 @@ jobs:
   verify:
     name: Poll & Verify E2E Job
     runs-on: ubuntu-latest
+
     permissions:
       id-token: write
       contents: read
@@ -34,71 +35,97 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # -----------------------------
+      # AWS AUTH
+      # -----------------------------
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ inputs.aws_role }}
           aws-region: ${{ inputs.aws_region }}
 
+      # -----------------------------
+      # KUBECTL SETUP (FIXED)
+      # -----------------------------
       - name: Setup kubeconfig
         run: |
-          aws eks update-kubeconfig --region ${{ inputs.aws_region }} --name ${{ inputs.cluster_name }}
+          set -euo pipefail
 
+          aws sts get-caller-identity
+
+          aws eks update-kubeconfig \
+            --region "${{ inputs.aws_region }}" \
+            --name "${{ inputs.cluster_name }}" \
+            --alias eks
+
+          kubectl config use-context eks
+
+          echo "Testing cluster access..."
+          kubectl get ns
+
+      # -----------------------------
+      # WAIT FOR E2E JOB
+      # -----------------------------
       - name: Wait for E2E Job Completion
         run: |
-          set -e
+          set -euo pipefail
 
           NAMESPACE="pr-${{ inputs.pr_number }}"
           JOB="project-microservice-e2e-test-job"
 
-          echo "Waiting for E2E Job to be created in ${NAMESPACE}..."
-
-          kubectl cluster-info
-          kubectl config current-context
-
-          echo "Namespaces:"
-          kubectl get ns
-
-          echo "Jobs in all namespaces:"
-          kubectl get jobs -A | grep e2e || true
+          echo "Waiting for E2E Job in namespace: ${NAMESPACE}"
 
           # -------------------------
           # Phase 1: wait for creation
           # -------------------------
           for i in {1..60}; do
-            if kubectl -n ${NAMESPACE} get job ${JOB} >/dev/null 2>&1; then
+            if kubectl -n "${NAMESPACE}" get job "${JOB}" >/dev/null 2>&1; then
               echo "E2E Job detected!"
               break
             fi
 
-            if [ $i -eq 60 ]; then
+            if [ "$i" -eq 60 ]; then
               echo "Timeout: Job was not created"
+              kubectl get ns
+              kubectl get jobs -A || true
               exit 1
             fi
 
             sleep 10
           done
 
+          # -------------------------
+          # Phase 2: wait for completion
+          # -------------------------
           echo "Waiting for Job completion..."
 
+          kubectl -n "${NAMESPACE}" wait \
+            --for=condition=complete job/"${JOB}" \
+            --timeout=600s
+
           # -------------------------
-          # Phase 2: wait for finish
+          # FINAL STATUS CHECK (ROBUST)
           # -------------------------
-          kubectl -n ${NAMESPACE} wait --for=condition=complete job/${JOB} --timeout=600s || true
+          echo "Checking final job status..."
 
-          echo "Validating final result..."
+          STATUS_JSON=$(kubectl -n "${NAMESPACE}" get job "${JOB}" -o json)
 
-          STATUS_JSON=$(kubectl -n ${NAMESPACE} get job ${JOB} -o json)
-
-          SUCCEEDED=$(echo "$STATUS_JSON" | jq -r '.status.succeeded // 0')
+          COMPLETED=$(echo "$STATUS_JSON" | jq -r '.status.conditions[]? | select(.type=="Complete") | .status' | head -n1)
           FAILED=$(echo "$STATUS_JSON" | jq -r '.status.failed // 0')
-          COMPLETED=$(echo "$STATUS_JSON" | jq -r '.status.completionTime // empty')
+          SUCCEEDED=$(echo "$STATUS_JSON" | jq -r '.status.succeeded // 0')
 
-          if [ -n "$COMPLETED" ] && [ "$FAILED" = "0" ]; then
-            echo "E2E tests passed successfully!"
+          echo "Completed=$COMPLETED"
+          echo "Succeeded=$SUCCEEDED"
+          echo "Failed=$FAILED"
+
+          # -------------------------
+          # RESULT DECISION
+          # -------------------------
+          if [ "$COMPLETED" = "True" ] && [ "$FAILED" = "0" ]; then
+            echo "E2E tests PASSED"
             exit 0
           fi
 
-          echo "E2E tests failed!"
-          kubectl -n ${NAMESPACE} logs job/${JOB} --tail=200 || true
+          echo "E2E tests FAILED"
+          kubectl -n "${NAMESPACE}" logs job/"${JOB}" --tail=200 || true
           exit 1
