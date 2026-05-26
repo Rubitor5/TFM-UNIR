@@ -1,7 +1,0 @@
-namespace: pr-23
-
-image:
-  repository: 100002492253.dkr.ecr.eu-north-1.amazonaws.com/project-microservice
-  tag: 42d819c1f3b68b0000963b8b0862ea5382aa2f86
-
-host: pr-23.example.com
