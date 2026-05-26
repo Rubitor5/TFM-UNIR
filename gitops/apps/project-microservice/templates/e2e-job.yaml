@@ -5,7 +5,7 @@ metadata:
   namespace: {{ .Values.namespace }}
   annotations:
     "argocd.argoproj.io/hook": PostSync
-    "argocd.argoproj.io/hook-delete-policy": HookSucceeded,BeforeHookCreation
+    "argocd.argoproj.io/hook-delete-policy": BeforeHookCreation
   labels:
     app: project-microservice-e2e
 
