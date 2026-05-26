@@ -1,0 +1,7 @@
+namespace: pr-26
+
+image:
+  repository: 100002492253.dkr.ecr.eu-north-1.amazonaws.com/project-microservice
+  tag: 1777a88d6abce63108b7bfc28e1e1de525050fb5
+
+host: pr-26.example.com
