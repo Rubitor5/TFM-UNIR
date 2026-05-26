@@ -53,6 +53,15 @@ jobs:
 
           echo "Waiting for E2E Job to be created in ${NAMESPACE}..."
 
+          kubectl cluster-info
+          kubectl config current-context
+
+          echo "Namespaces:"
+          kubectl get ns
+
+          echo "Jobs in all namespaces:"
+          kubectl get jobs -A | grep e2e || true
+
           # -------------------------
           # Phase 1: wait for creation
           # -------------------------
