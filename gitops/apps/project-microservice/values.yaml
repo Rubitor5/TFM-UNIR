@@ -10,7 +10,3 @@ replicaCount: 1
 service:
   port: 8081
 
-ingress:
-  enabled: false
-  className: nginx
-  host: example.local
