@@ -43,7 +43,6 @@ jobs:
 
   ai-security-triage:
     name: AI Security Triage
-    if: ${{ false }}
     needs:
       - semgrep
       - trivy
@@ -55,6 +54,7 @@ jobs:
     name: Build Image
     needs:
       - build-test
+      - ai-security-triage
     uses: ./.github/workflows/build-image.yml
     secrets: inherit
 
