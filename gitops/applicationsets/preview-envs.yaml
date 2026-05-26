@@ -35,8 +35,7 @@ spec:
               tag: {{image.tag}}
 
             ingress:
-              enabled: true
-              host: {{host}}
+              enabled: false
 
       destination:
         server: https://kubernetes.default.svc

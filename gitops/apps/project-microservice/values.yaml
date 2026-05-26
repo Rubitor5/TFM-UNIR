@@ -11,6 +11,6 @@ service:
   port: 8081
 
 ingress:
-  enabled: true
+  enabled: false
   className: nginx
   host: example.local
