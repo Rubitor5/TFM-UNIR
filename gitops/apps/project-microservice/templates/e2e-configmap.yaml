@@ -1,0 +1,214 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: project-microservice-e2e-tests
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: project-microservice-e2e
+data:
+  e2e_test.py: |
+    #!/usr/bin/env python3
+    import urllib.request
+    import urllib.error
+    import json
+    import sys
+    import os
+    import time
+
+    # Colors for logging
+    GREEN = "\033[92m"
+    RED = "\033[91m"
+    YELLOW = "\033[93m"
+    BLUE = "\033[94m"
+    RESET = "\033[0m"
+
+    def log_info(msg):
+        print(f"{BLUE}[INFO]{RESET} {msg}")
+
+    def log_success(msg):
+        print(f"{GREEN}[PASS]{RESET} {msg}")
+
+    def log_warn(msg):
+        print(f"{YELLOW}[WARN]{RESET} {msg}")
+
+    def log_error(msg):
+        print(f"{RED}[FAIL]{RESET} {msg}")
+
+    # Configuration
+    SERVICE_URL = os.environ.get("SERVICE_URL", "http://project-microservice:8081").rstrip("/")
+    log_info(f"Target Service URL: {SERVICE_URL}")
+
+    def make_request(path, method="GET", data=None, expected_status=200):
+        url = f"{SERVICE_URL}{path}"
+        req_data = None
+        headers = {}
+        if data is not None:
+            req_data = json.dumps(data).encode("utf-8")
+            headers = {"Content-Type": "application/json"}
+        
+        req = urllib.request.Request(url, data=req_data, headers=headers, method=method)
+        try:
+            with urllib.request.urlopen(req) as response:
+                status = response.status
+                body_raw = response.read()
+                body = body_raw.decode("utf-8")
+                
+                # Verify status
+                if status != expected_status:
+                    raise AssertionError(f"Expected status {expected_status}, got {status}")
+                
+                # Parse JSON if possible
+                if body:
+                    try:
+                        return json.loads(body), status
+                    except json.JSONDecodeError:
+                        return body, status
+                return None, status
+        except urllib.error.HTTPError as e:
+            status = e.code
+            body_raw = e.read()
+            body = body_raw.decode("utf-8")
+            if status != expected_status:
+                log_error(f"HTTP Error {status} on {method} {path}: {body}")
+                raise AssertionError(f"Expected status {expected_status}, got {status}")
+            
+            if body:
+                try:
+                    return json.loads(body), status
+                except json.JSONDecodeError:
+                    return body, status
+            return None, status
+        except Exception as e:
+            log_error(f"Connection failed to {method} {url}: {e}")
+            raise e
+
+    # 1. Health check check loop
+    log_info("Starting service health check loop...")
+    retries = 30
+    connected = False
+    for i in range(retries):
+        try:
+            _, status = make_request("/api/projects", "GET", expected_status=200)
+            if status == 200:
+                log_success("Service is online and healthy!")
+                connected = True
+                break
+        except Exception:
+            log_warn(f"Waiting for service... (attempt {i+1}/{retries})")
+            time.sleep(2)
+
+    if not connected:
+        log_error("Could not connect to the service. Aborting tests.")
+        sys.exit(1)
+
+    try:
+        # 2. Client Workflow
+        log_info("--- Starting Client Workflow ---")
+        client_id = 1000
+        client_payload = {"id": client_id, "clientName": "E2E Test Client"}
+        
+        # POST Client
+        resp, status = make_request("/api/clients", "POST", client_payload, expected_status=201)
+        if resp.get("id") != client_id or resp.get("clientName") != "E2E Test Client":
+            raise AssertionError(f"Unexpected POST response: {resp}")
+        log_success("Created client successfully")
+
+        # GET Client
+        resp, _ = make_request(f"/api/clients/{client_id}", "GET", expected_status=200)
+        if resp.get("clientName") != "E2E Test Client":
+            raise AssertionError(f"Unexpected GET response: {resp}")
+        log_success("Retrieved client successfully")
+
+        # PUT Client
+        update_payload = {"clientName": "E2E Test Client Updated"}
+        make_request(f"/api/clients/{client_id}", "PUT", update_payload, expected_status=200)
+        log_success("Updated client successfully")
+
+        # Verify PUT
+        resp, _ = make_request(f"/api/clients/{client_id}", "GET", expected_status=200)
+        if resp.get("clientName") != "E2E Test Client Updated":
+            raise AssertionError(f"Client name not updated: {resp}")
+        log_success("Verified client update successfully")
+
+        # DELETE Client
+        make_request(f"/api/clients/{client_id}", "DELETE", expected_status=204)
+        log_success("Deleted client successfully")
+
+        # Verify DELETE (should return 404)
+        make_request(f"/api/clients/{client_id}", "GET", expected_status=404)
+        log_success("Verified client deletion successfully")
+
+        # 3. Project Workflow
+        log_info("--- Starting Project Workflow ---")
+        project_id = 1000
+        project_payload = {
+            "id": project_id,
+            "projectTitle": "E2E Test Project",
+            "clientId": 1,
+            "clientName": "Acme Corporation"
+        }
+        
+        # POST Project
+        resp, status = make_request("/api/projects", "POST", project_payload, expected_status=201)
+        if resp.get("id") != project_id or resp.get("projectTitle") != "E2E Test Project":
+            raise AssertionError(f"Unexpected POST response: {resp}")
+        log_success("Created project successfully")
+
+        # GET Project
+        resp, _ = make_request(f"/api/projects/{project_id}", "GET", expected_status=200)
+        if resp.get("projectTitle") != "E2E Test Project":
+            raise AssertionError(f"Unexpected GET response: {resp}")
+        log_success("Retrieved project successfully")
+
+        # PUT Project
+        update_payload = {
+            "projectTitle": "E2E Test Project Updated",
+            "clientId": 1,
+            "clientName": "Acme Corporation"
+        }
+        make_request(f"/api/projects/{project_id}", "PUT", update_payload, expected_status=200)
+        log_success("Updated project successfully")
+
+        # Verify PUT
+        resp, _ = make_request(f"/api/projects/{project_id}", "GET", expected_status=200)
+        if resp.get("projectTitle") != "E2E Test Project Updated":
+            raise AssertionError(f"Project title not updated: {resp}")
+        log_success("Verified project update successfully")
+
+        # DELETE Project
+        make_request(f"/api/projects/{project_id}", "DELETE", expected_status=204)
+        log_success("Deleted project successfully")
+
+        # Verify DELETE (should return 404)
+        make_request(f"/api/projects/{project_id}", "GET", expected_status=404)
+        log_success("Verified project deletion successfully")
+
+        # 4. Error Handling Checks
+        log_info("--- Starting Error Handling Checks ---")
+        make_request("/api/clients/99999", "GET", expected_status=404)
+        make_request("/api/projects/99999", "GET", expected_status=404)
+        log_success("Error handling verified successfully")
+
+        # 5. Multi-resource lists checks
+        log_info("--- Starting Multi-resource Checks ---")
+        resp, _ = make_request("/api/clients", "GET", expected_status=200)
+        if not isinstance(resp, list):
+            raise AssertionError("Expected clients list to be a JSON array")
+        log_success(f"Verified clients list: {len(resp)} clients found")
+
+        resp, _ = make_request("/api/projects", "GET", expected_status=200)
+        if not isinstance(resp, list):
+            raise AssertionError("Expected projects list to be a JSON array")
+        log_success(f"Verified projects list: {len(resp)} projects found")
+
+        print(f"\n{GREEN}====================================={RESET}")
+        print(f"{GREEN}ALL E2E WORKFLOW TESTS PASSED SUCCESSFULLY!{RESET}")
+        print(f"{GREEN}====================================={RESET}")
+        sys.exit(0)
+
+    except AssertionError as e:
+        log_error(f"Assertion failed: {e}")
+        sys.exit(2)
+    except Exception as e:
+        log_error(f"Unexpected error occurred: {e}")
+        sys.exit(3)

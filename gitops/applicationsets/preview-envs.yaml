@@ -24,7 +24,7 @@ spec:
       source:
         repoURL: https://github.com/Rubitor5/TFM-UNIR.git
         targetRevision: gitops-state
-        path: gitops/apps/microservice
+        path: gitops/apps/project-microservice
 
         helm:
           values: |
