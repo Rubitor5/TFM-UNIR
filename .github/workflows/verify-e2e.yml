@@ -46,41 +46,50 @@ jobs:
 
       - name: Wait for E2E Job Completion
         run: |
+          set -e
+
           NAMESPACE="pr-${{ inputs.pr_number }}"
+          JOB="project-microservice-e2e-test-job"
 
-          echo "Waiting for ArgoCD to sync and create the E2E test job in namespace ${NAMESPACE}..."
+          echo "Waiting for E2E Job to be created in ${NAMESPACE}..."
 
-          # Poll up to 10 minutes for Job creation
+          # -------------------------
+          # Phase 1: wait for creation
+          # -------------------------
           for i in {1..60}; do
-            if kubectl -n ${NAMESPACE} get job project-microservice-e2e-test-job >/dev/null 2>&1; then
+            if kubectl -n ${NAMESPACE} get job ${JOB} >/dev/null 2>&1; then
               echo "E2E Job detected!"
               break
             fi
-            sleep 10
-          done
 
-          echo "Monitoring E2E Job execution..."
-
-          # Poll up to 10 minutes for completion
-          for i in {1..60}; do
-
-            SUCCEEDED=$(kubectl -n ${NAMESPACE} get job project-microservice-e2e-test-job -o jsonpath='{.status.succeeded}' 2>/dev/null)
-            FAILED=$(kubectl -n ${NAMESPACE} get job project-microservice-e2e-test-job -o jsonpath='{.status.failed}' 2>/dev/null)
-
-            if [ "$SUCCEEDED" = "1" ]; then
-              echo "E2E tests passed successfully!"
-              exit 0
-            fi
-
-            if [ "$FAILED" != "" ] && [ "$FAILED" != "0" ]; then
-              echo "E2E tests failed! Check logs:"
-              kubectl -n ${NAMESPACE} logs job/project-microservice-e2e-test-job --tail=100
+            if [ $i -eq 60 ]; then
+              echo "Timeout: Job was not created"
               exit 1
             fi
 
-            echo "Job still running... (succeeded=$SUCCEEDED failed=$FAILED)"
             sleep 10
           done
 
-          echo "Timeout waiting for E2E Job to finish."
+          echo "Waiting for Job completion..."
+
+          # -------------------------
+          # Phase 2: wait for finish
+          # -------------------------
+          kubectl -n ${NAMESPACE} wait --for=condition=complete job/${JOB} --timeout=600s || true
+
+          echo "Validating final result..."
+
+          STATUS_JSON=$(kubectl -n ${NAMESPACE} get job ${JOB} -o json)
+
+          SUCCEEDED=$(echo "$STATUS_JSON" | jq -r '.status.succeeded // 0')
+          FAILED=$(echo "$STATUS_JSON" | jq -r '.status.failed // 0')
+          COMPLETED=$(echo "$STATUS_JSON" | jq -r '.status.completionTime // empty')
+
+          if [ -n "$COMPLETED" ] && [ "$FAILED" = "0" ]; then
+            echo "E2E tests passed successfully!"
+            exit 0
+          fi
+
+          echo "E2E tests failed!"
+          kubectl -n ${NAMESPACE} logs job/${JOB} --tail=200 || true
           exit 1
