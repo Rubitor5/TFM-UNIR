@@ -68,6 +68,7 @@ jobs:
     with:
       pr_number: ${{ github.event.number }}
       image_tag: ${{ needs.build-image.outputs.image_tag }}
+      image_digest: ${{ needs.build-image.outputs.image_digest }}
 
   e2e-verification:
     name: E2E Verification
