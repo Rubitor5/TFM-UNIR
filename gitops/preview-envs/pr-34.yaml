@@ -1,8 +1,0 @@
-namespace: pr-34
-
-image:
-  repository: 100002492253.dkr.ecr.eu-north-1.amazonaws.com/project-microservice
-  tag: b6de89fdccb914e27c6b441f0151d952e1f17bfd
-  digest: sha256:f17f0cce1ce1e4ee2dbf390fdb85677495d96a8892f7d821da223c3fb959c4ee
-
-host: pr-34.example.com
