@@ -1,0 +1,7 @@
+namespace: pr-30
+
+image:
+  repository: 100002492253.dkr.ecr.eu-north-1.amazonaws.com/project-microservice
+  tag: 094ef208328064e7f94ebf7d7f1225b6678e2c56
+
+host: pr-30.example.com
