@@ -2,7 +2,7 @@ apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 
 metadata:
-  name: preview-envs
+  name: prod-envs
   namespace: argocd
 
 spec:
@@ -10,13 +10,12 @@ spec:
     - git:
         repoURL: https://github.com/Rubitor5/TFM-UNIR.git
         revision: gitops-state
-
         files:
-          - path: gitops/preview-envs/*.yaml
+          - path: gitops/prod-envs/*.yaml
 
   template:
     metadata:
-      name: '{{namespace}}'
+      name: production
 
     spec:
       project: default
@@ -28,20 +27,19 @@ spec:
 
         helm:
           values: |
-            namespace: {{namespace}}
+            namespace: production
 
             image:
               repository: {{image.repository}}
-              tag: {{image.tag}}
+              digest: {{image.digest}}
+
+            replicas: 3
 
       destination:
         server: https://kubernetes.default.svc
-        namespace: '{{namespace}}'
+        namespace: production
 
       syncPolicy:
         automated:
           prune: true
           selfHeal: true
-
-        syncOptions:
-          - CreateNamespace=true

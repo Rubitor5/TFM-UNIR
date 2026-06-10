@@ -5,6 +5,8 @@ on:
     outputs:
       image_tag:
         value: ${{ jobs.build-image.outputs.image_tag }}
+      image_digest:
+        value: ${{ jobs.build-image.outputs.image_digest }}
 
 jobs:
   build-image:
@@ -16,6 +18,7 @@ jobs:
 
     outputs:
       image_tag: ${{ steps.meta.outputs.image_tag }}
+      image_digest: ${{ steps.digest.outputs.image_digest }}
 
     steps:
       - uses: actions/checkout@v4
@@ -40,3 +43,19 @@ jobs:
           IMAGE=100002492253.dkr.ecr.eu-north-1.amazonaws.com/project-microservice:${{ steps.meta.outputs.image_tag }}
           docker build -t $IMAGE .
           docker push $IMAGE
+          
+          # Tag with PR number if it's a pull request to make promotion to production robust
+          PR_NUMBER="${{ github.event.pull_request.number || github.event.inputs.pr_number }}"
+          if [ -n "$PR_NUMBER" ]; then
+            PR_IMAGE=100002492253.dkr.ecr.eu-north-1.amazonaws.com/project-microservice:pr-$PR_NUMBER
+            docker tag $IMAGE $PR_IMAGE
+            docker push $PR_IMAGE
+          fi
+
+      - name: Get image digest
+        id: digest
+        run: |
+          REPO_NAME=project-microservice
+          IMAGE_TAG=${{ steps.meta.outputs.image_tag }}
+          DIGEST=$(aws ecr describe-images --repository-name "$REPO_NAME" --image-ids imageTag="$IMAGE_TAG" --query 'imageDetails[0].imageDigest' --output text)
+          echo "image_digest=${DIGEST}" >> $GITHUB_OUTPUT

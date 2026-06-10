@@ -1,0 +1,42 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: project-microservice-e2e-test-job
+  namespace: {{ .Values.namespace }}
+  annotations:
+    "argocd.argoproj.io/hook": PostSync
+    "argocd.argoproj.io/hook-delete-policy": BeforeHookCreation
+  labels:
+    app: project-microservice-e2e
+
+spec:
+  backoffLimit: 2
+
+  template:
+    metadata:
+      labels:
+        app: project-microservice-e2e
+
+    spec:
+      restartPolicy: Never
+
+      containers:
+        - name: e2e-test-runner
+          image: python:3.11-alpine
+          imagePullPolicy: IfNotPresent
+
+          env:
+            - name: SERVICE_URL
+              value: "http://project-microservice:{{ .Values.service.port }}"
+
+          command: ["python", "/tests/e2e_test.py"]
+
+          volumeMounts:
+            - name: test-script-volume
+              mountPath: /tests
+
+      volumes:
+        - name: test-script-volume
+          configMap:
+            name: project-microservice-e2e-tests
+            defaultMode: 0755

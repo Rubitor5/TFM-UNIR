@@ -1,0 +1,73 @@
+name: Verify E2E Tests
+
+on:
+  workflow_call:
+    inputs:
+      pr_number:
+        required: true
+        type: string
+
+      cluster_name:
+        required: false
+        type: string
+        default: tfm-unir-eks
+
+      aws_region:
+        required: false
+        type: string
+        default: eu-north-1
+
+      aws_role:
+        required: false
+        type: string
+        default: arn:aws:iam::100002492253:role/github-actions-role
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: AWS auth
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ inputs.aws_role }}
+          aws-region: ${{ inputs.aws_region }}
+
+      - name: Setup kubeconfig
+        run: |
+          aws eks update-kubeconfig \
+            --region "${{ inputs.aws_region }}" \
+            --name "${{ inputs.cluster_name }}" \
+            --alias eks
+
+          kubectl config use-context eks
+
+      - name: Wait for E2E job
+        run: |
+          set -euo pipefail
+
+          NAMESPACE="pr-${{ inputs.pr_number }}"
+          JOB="project-microservice-e2e-test-job"
+
+          for i in {1..60}; do
+            kubectl -n "$NAMESPACE" get job "$JOB" >/dev/null 2>&1 && break
+            [ "$i" -eq 60 ] && exit 1
+            sleep 10
+          done
+
+          kubectl -n "$NAMESPACE" wait \
+            --for=condition=complete job/"$JOB" \
+            --timeout=600s
+
+          FAILED=$(kubectl -n "$NAMESPACE" get job "$JOB" -o jsonpath='{.status.failed}' || echo 0)
+
+          if [ "${FAILED:-0}" != "0" ]; then
+            kubectl -n "$NAMESPACE" logs job/"$JOB" --tail=200 || true
+            exit 1
+          fi
