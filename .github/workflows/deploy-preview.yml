@@ -9,6 +9,9 @@ on:
       image_tag:
         required: true
         type: string
+      image_digest:
+        required: true
+        type: string
 
 jobs:
   deploy-preview:
@@ -25,6 +28,7 @@ jobs:
         run: |
           PR=${{ inputs.pr_number }}
           IMAGE_TAG=${{ inputs.image_tag }}
+          IMAGE_DIGEST=${{ inputs.image_digest }}
 
           mkdir -p gitops/preview-envs
 
@@ -34,6 +38,7 @@ jobs:
           image:
             repository: 100002492253.dkr.ecr.eu-north-1.amazonaws.com/project-microservice
             tag: ${IMAGE_TAG}
+            digest: ${IMAGE_DIGEST}
 
           host: pr-${PR}.example.com
           EOF

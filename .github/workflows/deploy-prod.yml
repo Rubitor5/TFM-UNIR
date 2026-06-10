@@ -1,0 +1,98 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout GitOps repo
+        uses: actions/checkout@v4
+        with:
+          repository: Rubitor5/TFM-UNIR
+          token: ${{ secrets.GH_TOKEN }}
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::100002492253:role/github-actions-role
+          aws-region: eu-north-1
+
+      - name: Try to read preview digest for merged PR
+        id: resolve
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+        run: |
+          REPO_NAME=project-microservice
+          # Try to find PR associated with this commit
+          PR_NUMBER=$(curl -s -H "Accept: application/vnd.github.groot-preview+json" -H "Authorization: token ${GH_TOKEN}" "https://api.github.com/repos/${{ github.repository }}/commits/${{ github.sha }}/pulls" | jq -r '.[0].number // empty')
+          echo "found_pr=$PR_NUMBER" >&2
+          DIGEST=""
+          
+          # Look for PR tag in ECR first
+          if [ -n "$PR_NUMBER" ]; then
+            DIGEST=$(aws ecr describe-images --repository-name "$REPO_NAME" --image-ids imageTag="pr-$PR_NUMBER" --query 'imageDetails[0].imageDigest' --output text 2>/dev/null || true)
+            if [ "$DIGEST" = "None" ]; then DIGEST=""; fi
+          fi
+
+          if [ -z "$DIGEST" ] && [ -n "$PR_NUMBER" ]; then
+            # Fallback to gitops-state branch preview file history
+            git fetch origin gitops-state || true
+            git checkout gitops-state || git checkout -b gitops-state origin/gitops-state || true
+            PREVIEW_FILE=gitops/preview-envs/pr-${PR_NUMBER}.yaml
+            if [ -f "$PREVIEW_FILE" ]; then
+              DIGEST=$(grep 'digest:' "$PREVIEW_FILE" | head -n1 | sed 's/.*digest:[[:space:]]*//' | tr -d '\r') || true
+            else
+              DIGEST=$(git log -p -- "$PREVIEW_FILE" | grep '^\-.*digest:' | head -n1 | sed 's/.*digest:[[:space:]]*//' | tr -d '\r') || true
+            fi
+          fi
+          
+          # Fallback to ECR lookup by merge commit SHA
+          if [ -z "$DIGEST" ]; then
+            TAG=${{ github.sha }}
+            DIGEST=$(aws ecr describe-images --repository-name "$REPO_NAME" --image-ids imageTag="$TAG" --query 'imageDetails[0].imageDigest' --output text 2>/dev/null || true)
+            if [ "$DIGEST" = "None" ]; then DIGEST=""; fi
+          fi
+
+          if [ -z "$DIGEST" ]; then
+            echo "No image digest found for repository $REPO_NAME"
+            exit 1
+          fi
+          echo "image_digest=$DIGEST" >> $GITHUB_OUTPUT
+
+      - name: Create prod manifest
+        run: |
+          DIGEST=${{ steps.resolve.outputs.image_digest }}
+          mkdir -p gitops/prod-envs
+          cat > gitops/prod-envs/production.yaml <<EOF
+          namespace: production
+
+          image:
+            repository: 100002492253.dkr.ecr.eu-north-1.amazonaws.com/project-microservice
+            digest: ${DIGEST}
+
+          host: production.example.com
+          EOF
+
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+
+          git fetch origin gitops-state
+
+          git checkout gitops-state || git checkout -b gitops-state origin/gitops-state
+
+          git add gitops/prod-envs/production.yaml
+
+          git commit -m "promote: production image ${DIGEST}" || echo "No changes to commit"
+
+          git push origin gitops-state
