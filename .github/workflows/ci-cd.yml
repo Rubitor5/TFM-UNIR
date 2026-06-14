@@ -32,7 +32,6 @@ jobs:
 
   trivy:
     name: Trivy scan
-    if: false # Temporarily disable Trivy scan to avoid build failures due to new vulnerabilities
     needs: build-test
     uses: ./.github/workflows/scan-trivy.yml
 
@@ -44,8 +43,6 @@ jobs:
 
   ai-security-triage:
     name: AI Security Triage
-    if: false # Temporarily disable AI triage to avoid blocking PRs due to new vulnerabilities until we have a better process in place
-    needs:
       - semgrep
       - trivy
       - sonarqube
@@ -56,6 +53,7 @@ jobs:
     name: Build Image
     needs:
       - build-test
+      - ai-security-triage
     uses: ./.github/workflows/build-image.yml
     secrets: inherit
 
