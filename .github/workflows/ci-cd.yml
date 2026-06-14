@@ -43,6 +43,7 @@ jobs:
 
   ai-security-triage:
     name: AI Security Triage
+    needs:
       - semgrep
       - trivy
       - sonarqube
