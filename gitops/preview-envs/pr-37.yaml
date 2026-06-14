@@ -1,0 +1,8 @@
+namespace: pr-37
+
+image:
+  repository: 100002492253.dkr.ecr.eu-north-1.amazonaws.com/project-microservice
+  tag: 409949d88695d4ce2946aa3144d2c04aa9448f4f
+  digest: sha256:b0dc56065a397519c01540543a0f51700054d392c24193e2f20a638ff777c7bd
+
+host: pr-37.example.com
