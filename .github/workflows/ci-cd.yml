@@ -32,7 +32,7 @@ jobs:
 
   trivy:
     name: Trivy scan
-    if: false
+    needs: build-test
     needs: build-test
     uses: ./.github/workflows/scan-trivy.yml
 
