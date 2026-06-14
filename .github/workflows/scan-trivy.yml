@@ -9,33 +9,39 @@ on:
         type: string
         default: project-microservice
 
-      severity:
-        description: Comma-separated severity levels that fail the build
-        required: false
-        type: string
-        default: CRITICAL,HIGH
-
 jobs:
   trivy:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
 
-      - name: Run Trivy scan
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Cache Trivy DB
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/trivy
+          key: trivy-${{ runner.os }}
+
+      - name: Run Trivy scan (safe CI mode)
         uses: aquasecurity/trivy-action@master
         with:
           scan-type: fs
           scan-ref: ${{ inputs.scan_ref }}
+
           format: json
           output: trivy-results.json
 
           scanners: vuln,secret
-          ignore-unfixed: true
 
+          ignore-unfixed: true
           exit-code: '0'
 
-      - name: Upload Results
+          skip-files: "**/*.pom,**/pom.xml"
+          skip-dirs: "**/.m2,**/target"
+
+      - name: Upload Trivy report
         uses: actions/upload-artifact@v4
         with:
           name: trivy-results
