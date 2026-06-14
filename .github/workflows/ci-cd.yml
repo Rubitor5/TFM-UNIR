@@ -30,6 +30,12 @@ jobs:
     needs: build-test
     uses: ./.github/workflows/scan-semgrep.yml
 
+  trivy:
+    name: Trivy scan
+    if: false
+    needs: build-test
+    uses: ./.github/workflows/scan-trivy.yml
+
   sonarqube:
     name: SonarQube code quality
     needs: build-test
@@ -40,6 +46,7 @@ jobs:
     name: AI Security Triage
     needs:
       - semgrep
+      - trivy
       - sonarqube
     uses: ./.github/workflows/ai-triaging.yml
     secrets: inherit
