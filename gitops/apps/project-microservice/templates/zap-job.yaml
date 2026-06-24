@@ -1,0 +1,24 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: project-microservice-zap-job
+  namespace: {{ .Values.namespace }}
+  annotations:
+    "argocd.argoproj.io/hook": PostSync
+    "argocd.argoproj.io/hook-weight": "0"
+    "argocd.argoproj.io/hook-delete-policy": BeforeHookCreation
+  labels:
+    app: project-microservice-zap
+spec:
+  backoffLimit: 2
+  template:
+    metadata:
+      labels:
+        app: project-microservice-zap
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: zap-scanner
+          image: ghcr.io/zaproxy/zaproxy:stable
+          imagePullPolicy: IfNotPresent
+          command: ["zap-baseline.py", "-t", "http://project-microservice:{{ .Values.service.port }}", "-I"]
