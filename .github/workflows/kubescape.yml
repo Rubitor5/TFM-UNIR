@@ -1,4 +1,4 @@
-name: Auditoria CI Kubescape
+name: Auditoria Estatica Kubescape
 
 on:
   push:
@@ -17,7 +17,17 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Escanear manifiestos con Kubescape
+      - name: Autofix con Kubescape
+        uses: kubescape/github-action@main
+        continue-on-error: true
+        with:
+          frameworks: NSA
+          format: json
+          outputFile: resultados.json
+          severityThreshold: critical
+          autofix: true
+
+      - name: Escaneo SARIF para GitHub Security
         uses: kubescape/github-action@main
         continue-on-error: true
         with:
