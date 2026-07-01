@@ -24,6 +24,7 @@ jobs:
           frameworks: NSA
           format: sarif
           outputFile: resultados.sarif
+          severityThreshold: critical
 
       - name: Subir SARIF a GitHub Security
         uses: github/codeql-action/upload-sarif@v4
