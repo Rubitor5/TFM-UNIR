@@ -1,0 +1,42 @@
+name: Auditoria Estatica Kubescape
+
+on:
+  push:
+    branches:
+      - kubescape-ci
+  pull_request:
+
+jobs:
+  kubescape:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Autofix con Kubescape
+        uses: kubescape/github-action@main
+        continue-on-error: true
+        with:
+          frameworks: NSA
+          format: json
+          outputFile: resultados.json
+          severityThreshold: critical
+          fixFiles: true
+
+      - name: Escaneo SARIF para GitHub Security
+        uses: kubescape/github-action@main
+        continue-on-error: true
+        with:
+          frameworks: NSA
+          format: sarif
+          outputFile: resultados.sarif
+          severityThreshold: critical
+
+      - name: Subir SARIF a GitHub Security
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: resultados.sarif
