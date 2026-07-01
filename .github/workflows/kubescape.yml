@@ -25,7 +25,7 @@ jobs:
           format: json
           outputFile: resultados.json
           severityThreshold: critical
-          autofix: true
+          fixFiles: true
 
       - name: Escaneo SARIF para GitHub Security
         uses: kubescape/github-action@main
